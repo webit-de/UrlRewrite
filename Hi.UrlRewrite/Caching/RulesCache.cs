@@ -6,19 +6,22 @@ using Sitecore.Caching;
 using Sitecore.Data;
 using System.Collections.Generic;
 using System.Linq;
+using Sitecore.Globalization;
 
 namespace Hi.UrlRewrite.Caching
 {
     public class RulesCache : CustomCache
     {
         private Database _db;
+        private Language _language;
         private const string inboundRulesKey = "InboundRules";
         private const string outboundRulesKey = "OutboundRules";
 
-        public RulesCache(Database db) :
+        public RulesCache(Database db, Language language) :
             base(string.Format("Hi.UrlRewrite[{0}]", db.Name), StringUtil.ParseSizeString(Configuration.CacheSize))
         {
             _db = db;
+            _language = language;
         }
 
         public List<InboundRule> GetInboundRules()

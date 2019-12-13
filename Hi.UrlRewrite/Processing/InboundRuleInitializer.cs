@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
+using Sitecore.Data.Managers;
+using Sitecore.Globalization;
 
 namespace Hi.UrlRewrite.Processing
 {
@@ -19,20 +21,21 @@ namespace Hi.UrlRewrite.Processing
 
             try
             {
-                using (new SecurityDisabler())
+              using (new SecurityDisabler())
+              {
+                // cache all of the rules
+                foreach (var db in Factory.GetDatabases().Where(e => e.HasContentItem))
                 {
-
-                    // cache all of the rules
-
-                    foreach (var db in Factory.GetDatabases().Where(e => e.HasContentItem))
-                    {
-                        var rulesEngine = new RulesEngine(db);
-                        rulesEngine.GetCachedInboundRules();
-                    }
-
-                    // make sure that the page event has been deployed
-                    DeployEventIfNecessary();
+                  foreach (var language in LanguageManager.GetLanguages(db))
+                  {
+                    var rulesEngine = new RulesEngine(db, language);
+                    rulesEngine.GetCachedInboundRules();
+                  }
                 }
+
+                // make sure that the page event has been deployed
+                DeployEventIfNecessary();
+              }
             }
             catch (Exception ex)
             {

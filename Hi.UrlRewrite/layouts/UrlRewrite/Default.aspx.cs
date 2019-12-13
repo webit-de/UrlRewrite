@@ -6,19 +6,22 @@ using Sitecore.Configuration;
 using Sitecore.Data;
 using System;
 using System.Linq;
-using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
+using Sitecore.Data.Managers;
+using Sitecore.Globalization;
 
 namespace Hi.UrlRewrite.sitecore_modules.Shell.UrlRewrite
 {
     public partial class Default : System.Web.UI.Page
     {
         private Database _db;
+        private Language _language;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             GetAndSetCurrentDatabase();
+            GetAndSetCurrentLanguage();
             CreateDatabaseDropdown();
 
             if (!IsPostBack)
@@ -76,13 +79,25 @@ namespace Hi.UrlRewrite.sitecore_modules.Shell.UrlRewrite
                 _db = Sitecore.Context.ContentDatabase;
             }
         }
+        private void GetAndSetCurrentLanguage()
+        {
+          var currentLanguage = Request.QueryString["lang"];
+          if (!string.IsNullOrEmpty(currentLanguage))
+          {
+            _language = LanguageManager.GetLanguage(currentLanguage);
+          }
+          else
+          {
+            _language = Sitecore.Context.ContentLanguage;
+          }
+        }
 
         private void DisplayException(Exception ex)
         {
-            divTable.Visible = false;
-            divInfo.Visible = false;
-            divError.Visible = true;
-            txtError.InnerText = @"Exception: 
+          divTable.Visible = false;
+          divInfo.Visible = false;
+          divError.Visible = true;
+          txtError.InnerText = @"Exception: 
 
     " + ex.Message;
         }
@@ -96,7 +111,7 @@ namespace Hi.UrlRewrite.sitecore_modules.Shell.UrlRewrite
 
             // TODO: allow variables to be set in the UI
 
-            var results = inboundRulesHelper.GetUrlResults(txtUrl.Text, _db);
+            var results = inboundRulesHelper.GetUrlResults(txtUrl.Text, _db, _language);
 
             if (results == null)
             {

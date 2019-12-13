@@ -1,6 +1,5 @@
 ﻿using Hi.UrlRewrite.Templates.Folders;
 using Hi.UrlRewrite.Templates.Inbound;
-using Sitecore;
 using Sitecore.Data;
 using Sitecore.Data.Events;
 using Sitecore.Data.Items;
@@ -52,7 +51,8 @@ namespace Hi.UrlRewrite.Processing
         private void RunItemSaved(Item item, ItemChanges itemChanges)
         {
             var db = item.Database;
-            var rulesEngine = new RulesEngine(db);
+      var language = item.Language;
+      var rulesEngine = new RulesEngine(db, language);
 
             try
             {
@@ -86,7 +86,7 @@ namespace Hi.UrlRewrite.Processing
 	                    {
 							Log.Info(this, db, "Simple Redirect [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.", item.Paths.FullPath);
 
-							rulesEngine.ClearInboundRuleCache();;
+              rulesEngine.ClearInboundRuleCache();
 						}
                     }
                     else if (item.IsInboundRuleItem())
@@ -178,7 +178,7 @@ namespace Hi.UrlRewrite.Processing
         private void RunItemDeleted(Item item, ID formerParentId)
         {
 
-            var rulesEngine = new RulesEngine(item.Database);
+      var rulesEngine = new RulesEngine(item.Database, item.Language);
 
             try
             {
@@ -200,7 +200,7 @@ namespace Hi.UrlRewrite.Processing
 	                    {
 		                    itemParent = item.Database.GetItem(formerParentId);
 	                    }
-	                    Log.Info(this, item.Database, "Updating parent inbound rule ({0}) after child delete event", itemParent.Paths.Path);
+            Log.Info(this, item.Database, "Updating parent inbound rule ({0}) after child delete event", itemParent.Paths.Path);
 
 	                    rulesEngine.RefreshRule(itemParent, GetRedirectFolderItem(itemParent));
                     }
@@ -216,7 +216,7 @@ namespace Hi.UrlRewrite.Processing
             }
             catch (Exception ex)
             {
-                Log.Error(this, ex, item.Database, "Exception occured which deleting item after publish Item ID: {0} Item Path: {1}", item.ID, item.Paths.FullPath);
+        Log.Error(this, ex, item.Database, "Exception occured which deleting item after publish Item ID: {0} Item Path: {1}", item.ID, item.Paths.FullPath);
             }
         }
 

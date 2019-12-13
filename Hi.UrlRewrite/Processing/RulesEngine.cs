@@ -14,12 +14,14 @@ using Sitecore.Collections;
 using Sitecore.Data;
 using Sitecore.Data.Fields;
 using Sitecore.Data.Items;
+using Sitecore.Globalization;
 
 namespace Hi.UrlRewrite.Processing
 {
 	public class RulesEngine
     {
         private readonly Database db;
+        private readonly Language language;
 
         public Database Database
         {
@@ -29,75 +31,81 @@ namespace Hi.UrlRewrite.Processing
             }
         }
 
-        public RulesEngine(Database db)
+        public RulesEngine(Database db, Language language)
         {
             this.db = db;
+            this.language = language;
         }
 
         public List<InboundRule> GetInboundRules()
         {
-            if (db == null)
-            {
-                return null;
-            }
+          if (db == null || language == null)
+          {
+            return null;
+          }
 
+          var inboundRules = new List<InboundRule>();
+
+          using (new LanguageSwitcher(language))
+          {
             var redirectFolderItems = GetRedirectFolderItems();
 
             if (redirectFolderItems == null)
             {
-                return null;
+              return null;
             }
-
-            var inboundRules = new List<InboundRule>();
 
             foreach (var redirectFolderItem in redirectFolderItems)
             {
-                Log.Debug(this, db, "Loading Inbound Rules from RedirectFolder: {0}", redirectFolderItem.Name);
+              Log.Debug(this, db, "Loading Inbound Rules from RedirectFolder: {0}", redirectFolderItem.Name);
 
-                AssembleRulesRecursive(redirectFolderItem, ref inboundRules, new RedirectFolderItem(redirectFolderItem));
+              AssembleRulesRecursive(redirectFolderItem, ref inboundRules,
+                new RedirectFolderItem(redirectFolderItem));
             }
+          }
 
-            return inboundRules;
+          return inboundRules;
         }
 
-	    private void AssembleRulesRecursive(Item ruleOrFolderItem, ref List<InboundRule> rules, RedirectFolderItem redirectFolderItem)
-	    {
-			if (ruleOrFolderItem.TemplateID == new ID(new Guid(SimpleRedirectItem.TemplateId)))
-			{
-				var simpleRedirectItem = new SimpleRedirectItem(ruleOrFolderItem);
+        private void AssembleRulesRecursive(Item ruleOrFolderItem, ref List<InboundRule> rules,
+          RedirectFolderItem redirectFolderItem)
+        {
+          if (ruleOrFolderItem.TemplateID == new ID(new Guid(SimpleRedirectItem.TemplateId)) && ruleOrFolderItem.Versions.Count > 0)
+          {
+            var simpleRedirectItem = new SimpleRedirectItem(ruleOrFolderItem);
 
-				Log.Debug(this, db, "Loading SimpleRedirect: {0}", simpleRedirectItem.Name);
+            Log.Debug(this, db, "Loading SimpleRedirect: {0}", simpleRedirectItem.Name);
 
-				var inboundRule = CreateInboundRuleFromSimpleRedirectItem(simpleRedirectItem, redirectFolderItem);
+            var inboundRule = CreateInboundRuleFromSimpleRedirectItem(simpleRedirectItem, redirectFolderItem);
 
-				if (inboundRule != null && inboundRule.Enabled)
-				{
-					rules.Add(inboundRule);
-				}
-			}
-			else if (ruleOrFolderItem.TemplateID == new ID(new Guid(InboundRuleItem.TemplateId)))
-			{
-				var inboundRuleItem = new InboundRuleItem(ruleOrFolderItem);
+            if (inboundRule != null && inboundRule.Enabled)
+            {
+              rules.Add(inboundRule);
+            }
+          }
+          else if (ruleOrFolderItem.TemplateID == new ID(new Guid(InboundRuleItem.TemplateId)))
+          {
+            var inboundRuleItem = new InboundRuleItem(ruleOrFolderItem);
 
-				Log.Debug(this, db, "Loading InboundRule: {0}", inboundRuleItem.Name);
+            Log.Debug(this, db, "Loading InboundRule: {0}", inboundRuleItem.Name);
 
-				var inboundRule = CreateInboundRuleFromInboundRuleItem(inboundRuleItem, redirectFolderItem);
+            var inboundRule = CreateInboundRuleFromInboundRuleItem(inboundRuleItem, redirectFolderItem);
 
-				if (inboundRule != null && inboundRule.Enabled)
-				{
-					rules.Add(inboundRule);
-				}
-			}
-			else if (ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectSubFolderItem.TemplateId))
-			         || ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectFolderItem.TemplateId)))
-			{
-				ChildList childRules = ruleOrFolderItem.GetChildren();
-				foreach (Item childRule in childRules)
-				{
-					AssembleRulesRecursive(childRule, ref rules, redirectFolderItem);
-				}
-			}
-		}
+            if (inboundRule != null && inboundRule.Enabled)
+            {
+              rules.Add(inboundRule);
+            }
+          }
+          else if (ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectSubFolderItem.TemplateId))
+                   || ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectFolderItem.TemplateId)))
+          {
+            ChildList childRules = ruleOrFolderItem.GetChildren();
+            foreach (Item childRule in childRules)
+            {
+              AssembleRulesRecursive(childRule, ref rules, redirectFolderItem);
+            }
+          }
+        }
 
         public List<OutboundRule> GetOutboundRules()
         {
@@ -145,7 +153,7 @@ namespace Hi.UrlRewrite.Processing
 
         private IEnumerable<Item> GetRedirectFolderItems()
         {
-            var redirectFolderItems = db.GetItem(RedirectFolderItem.TemplateId)
+            var redirectFolderItems = db.GetItem(RedirectFolderItem.TemplateId, language)
                 .GetReferrers()
                 .Where(e => e.TemplateID == new ID(RedirectFolderItem.TemplateId));
 
@@ -242,7 +250,7 @@ namespace Hi.UrlRewrite.Processing
 
         private RulesCache GetRulesCache()
         {
-            return RulesCacheManager.GetCache(db);
+            return RulesCacheManager.GetCache(db, language);
         }
 
         internal List<InboundRule> GetCachedInboundRules()
