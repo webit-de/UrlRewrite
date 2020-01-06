@@ -18,7 +18,7 @@ namespace Hi.UrlRewrite.Caching
         private const string outboundRulesKey = "OutboundRules";
 
         public RulesCache(Database db, Language language) :
-            base(string.Format("Hi.UrlRewrite[{0}]", db.Name), StringUtil.ParseSizeString(Configuration.CacheSize))
+            base(string.Format("Hi.UrlRewrite[{0}{1}]", db.Name, language.Name), StringUtil.ParseSizeString(Configuration.CacheSize))
         {
             _db = db;
             _language = language;

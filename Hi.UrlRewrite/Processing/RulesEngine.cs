@@ -99,7 +99,12 @@ namespace Hi.UrlRewrite.Processing
           else if (ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectSubFolderItem.TemplateId))
                    || ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectFolderItem.TemplateId)))
           {
-            ChildList childRules = ruleOrFolderItem.GetChildren();
+            var childRules = ruleOrFolderItem.GetChildren().ToList();
+            if (ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectSubFolderItem.TemplateId)))
+            {
+              childRules = childRules.Where(i => i.Versions.Count > 0).ToList();
+            }
+
             foreach (Item childRule in childRules)
             {
               AssembleRulesRecursive(childRule, ref rules, redirectFolderItem);
