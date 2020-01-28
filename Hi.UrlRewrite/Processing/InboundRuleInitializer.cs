@@ -8,6 +8,7 @@ using System.Linq;
 using System.Web;
 using Sitecore.Data.Managers;
 using Sitecore.Globalization;
+using Sitecore.Sites;
 
 namespace Hi.UrlRewrite.Processing
 {
@@ -22,6 +23,7 @@ namespace Hi.UrlRewrite.Processing
             try
             {
               using (new SecurityDisabler())
+              using(new SiteContextSwitcher(SiteContext.GetSite("shell")))
               {
                 // cache all of the rules
                 foreach (var db in Factory.GetDatabases().Where(e => e.HasContentItem))
