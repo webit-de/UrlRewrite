@@ -264,7 +264,7 @@ namespace Hi.UrlRewrite.Processing
 
             if (inboundRules != null)
             {
-                Log.Info(this, db, "Adding {0} rules to Cache [{1}]", inboundRules.Count, db.Name);
+                Log.Info(this, db, "Adding {0} rules to Cache [{1}{2}]", inboundRules.Count, db.Name, language);
 
                 var cache = GetRulesCache();
                 cache.SetInboundRules(inboundRules);
