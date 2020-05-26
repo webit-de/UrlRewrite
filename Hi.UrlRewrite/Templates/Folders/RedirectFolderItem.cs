@@ -51,6 +51,18 @@ namespace Hi.UrlRewrite.Templates.Folders
                 return new TextField(InnerItem.Fields["Site Name Restriction"]);
             }
         }
+           
+        public int ShortUrlTokenLength
+        {
+          get
+          {
+            var lengthValue = InnerItem.Fields[Constants.ShortUrlTokenLengthFieldName]?.Value;
+            int length;
+            return int.TryParse(lengthValue, out length) ? length : 0;
+          }
+        }
+
+        public string ShortUrlPrefix => InnerItem.Fields[Constants.ShortUrlPrefixFieldName]?.Value;
 
         #endregion //Field Instance Methods
     }
