@@ -56,6 +56,7 @@ namespace Hi.UrlRewrite
         public const string ShortUrlTokenCharacters = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
         public const string ShortUrlTokenLengthFieldName = "Short Url Token Length";
         public const string ShortUrlPrefixFieldName = "Short Url Prefix";
+        public const string ShortUrlFieldName = "Short Url";
 
     }
 }

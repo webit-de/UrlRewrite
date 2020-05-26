@@ -142,6 +142,7 @@
     <Compile Include="Entities\ServerVariables\ServerVariable.cs" />
     <Compile Include="Extensions\ItemExtensions.cs" />
     <Compile Include="Fields\SiteDropList.cs" />
+    <Compile Include="Helpers\ShortUrlHelpers.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="LogHelper.cs" />
     <Compile Include="Module\OutboundModule.cs" />
@@ -181,6 +182,7 @@
     <Compile Include="layouts\UrlRewrite\UrlRewriter.aspx.designer.cs">
       <DependentUpon>UrlRewriter.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Tasks\GenerateShortUrl.cs" />
     <Compile Include="Templates\Action\Base\BaseAppendQuerystringItem.cs" />
     <Compile Include="Templates\Action\Base\BaseRedirectItem.cs" />
     <Compile Include="Templates\Action\Base\BaseRewriteUrlItem.cs" />
