@@ -16,9 +16,11 @@ namespace Hi.UrlRewrite.Helpers
     /// </summary>
     /// <param name="token">The token to check</param>
     /// <returns>True if the token exists, False otherwise</returns>
-    public static bool DoesTokenExist(string token)
+    public static bool DoesTokenExist(string token, RedirectFolderItem redirectFolderItem)
     {
-      return true;
+      var query = "/sitecore/content//*[@@templateid='{EA7922DB-83AD-49BA-AD53-F30F058CEE74}']";
+      var shortUrlItems = redirectFolderItem.Database.SelectItems(query);
+      return shortUrlItems.Any(x => x.Fields[Constants.ShortUrlFieldName].Value.Equals(redirectFolderItem.ShortUrlPrefix + "/" + token));
     }
 
     /// <summary>
@@ -32,10 +34,19 @@ namespace Hi.UrlRewrite.Helpers
 
       var redirectFolderItem = GetRedirectFolderItem(item);
       // generate random tokens until a non existing token is found
+      var numTries = 10;
       do
       {
+        // do not generate a short Url if the try amount has been exceeded, to avoid an infinite loop
+        if (numTries < 1)
+        {
+          return string.Empty;
+        }
+
         resultToken = GenerateToken(redirectFolderItem.ShortUrlTokenLength);
-      } while (DoesTokenExist(resultToken));
+        numTries--;
+      } while (DoesTokenExist(resultToken, redirectFolderItem));
+
 
       return redirectFolderItem.ShortUrlPrefix + "/" + resultToken;
     }
