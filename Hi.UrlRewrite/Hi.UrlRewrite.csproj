@@ -183,6 +183,7 @@
     <Compile Include="layouts\UrlRewrite\UrlRewriter.aspx.designer.cs">
       <DependentUpon>UrlRewriter.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Tasks\ClearShortUrl.cs" />
     <Compile Include="Tasks\GenerateShortUrl.cs" />
     <Compile Include="Templates\Action\Base\BaseAppendQuerystringItem.cs" />
     <Compile Include="Templates\Action\Base\BaseRedirectItem.cs" />
