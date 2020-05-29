@@ -56,13 +56,13 @@ namespace Hi.UrlRewrite.Templates.Folders
         {
           get
           {
-            var lengthValue = InnerItem.Fields[Constants.ShortUrlTokenLengthFieldName]?.Value;
+            var lengthValue = InnerItem.Fields[Constants.ShortUrlTokenLength_FieldId]?.Value;
             int length;
             return int.TryParse(lengthValue, out length) ? length : 0;
           }
         }
 
-        public string ShortUrlPrefix => InnerItem.Fields[Constants.ShortUrlPrefixFieldName]?.Value;
+        public string ShortUrlPrefix => InnerItem.Fields[Constants.ShortUrlPrefix_FieldId]?.Value;
 
         #endregion //Field Instance Methods
     }

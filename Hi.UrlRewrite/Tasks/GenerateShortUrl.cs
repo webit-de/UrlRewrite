@@ -1,4 +1,6 @@
 ﻿
+using System;
+using Sitecore.Data;
 using Sitecore.SecurityModel;
 using Sitecore.Shell.Framework.Commands;
 
@@ -19,7 +21,7 @@ namespace Hi.UrlRewrite.Tasks
       using (new SecurityDisabler())
       {
         context.Items[0].Editing.BeginEdit();
-        context.Items[0].Fields[Constants.ShortUrlFieldName].Value = shortUrl;
+        context.Items[0].Fields[ID.Parse(Guid.Parse(Constants.ShortUrl_FieldId))].Value = shortUrl;
         context.Items[0].Editing.EndEdit();
       }
     }

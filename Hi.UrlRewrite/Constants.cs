@@ -53,10 +53,11 @@ namespace Hi.UrlRewrite
         public const string UrlRewriter_ItemId = "{3CF68609-B1F2-4ADE-B7E3-91B5CF74F5B8}";
         public const string RedirectEventItemId = "{1d668f23-eeba-4bd3-93b3-94861ed42060}";
 
-        public const string ShortUrlTokenCharacters = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
-        public const string ShortUrlTokenLengthFieldName = "Short Url Token Length";
-        public const string ShortUrlPrefixFieldName = "Short Url Prefix";
-        public const string ShortUrlFieldName = "Short Url";
+        public const string ShortUrlTokenCharacters = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789";
+        public const string ShortUrlTokenLength_FieldId = "{4A522C6F-7998-4779-9855-94922578D621}";
+        public const string ShortUrlPrefix_FieldId = "{EE59B9E7-79CB-4F96-A605-8D225DB86436}";
+        public const string ShortUrlTarget_FieldId = "{4DA7ADF8-16F1-462A-AE27-0DAA01DD94DD}";
+        public const string ShortUrl_FieldId = "{8A57DFE5-BBC6-4961-BC6C-52CC831B115D}";
 
     }
 }

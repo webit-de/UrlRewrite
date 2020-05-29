@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Web;
 using Hi.UrlRewrite.Templates.Folders;
 using Sitecore.Data;
 using Sitecore.Data.Items;
@@ -20,7 +17,7 @@ namespace Hi.UrlRewrite.Helpers
     {
       var query = "/sitecore/content//*[@@templateid='{EA7922DB-83AD-49BA-AD53-F30F058CEE74}']";
       var shortUrlItems = redirectFolderItem.Database.SelectItems(query);
-      return shortUrlItems.Any(x => x.Fields[Constants.ShortUrlFieldName].Value.Equals(redirectFolderItem.ShortUrlPrefix + "/" + token));
+      return shortUrlItems.Any(x => x.Fields[ID.Parse(Guid.Parse(Constants.ShortUrlTarget_FieldId))].Value.Equals(redirectFolderItem.ShortUrlPrefix + "/" + token));
     }
 
     /// <summary>
@@ -48,7 +45,7 @@ namespace Hi.UrlRewrite.Helpers
       } while (DoesTokenExist(resultToken, redirectFolderItem));
 
 
-      return redirectFolderItem.ShortUrlPrefix + "/" + resultToken;
+      return resultToken;
     }
 
     /// <summary>
