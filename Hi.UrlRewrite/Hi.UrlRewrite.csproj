@@ -164,6 +164,7 @@
     <Compile Include="Processing\RewriteHelper.cs" />
     <Compile Include="Processing\RulesEngine.cs" />
     <Compile Include="Analytics\Tracking.cs" />
+    <Compile Include="Processing\ShortUrlRewriteProcessor.cs" />
     <Compile Include="Processing\UrlRewriteHandler.cs" />
     <Compile Include="Processing\UrlRewriteItemEventHandler.cs" />
     <Compile Include="Processing\InboundRewriteProcessor.cs" />
