@@ -14,15 +14,22 @@ namespace Hi.UrlRewrite.Fields
     {
       Class = "scContentControl";
     }
-    
+
     protected override void DoRender(HtmlTextWriter output)
     {
       // display the full url instead of only the token
       var owningItem = Sitecore.Data.Database.GetDatabase("master").GetItem(ItemID);
-      
+
       var redirectFolderItem = ShortUrlHelpers.GetRedirectFolderItem(owningItem);
-      var valueString = GetHostname(owningItem) + "/" + redirectFolderItem.ShortUrlPrefix + "/" + Value;
-      
+
+      var valueString = string.Empty;
+
+      // only display a value, if a token is assigned
+      if (Value != string.Empty)
+      {
+        valueString = GetHostname(owningItem) + "/" + redirectFolderItem.ShortUrlPrefix + "/" + Value;
+      }
+
       output.Write("<input" + GetControlAttributes() + "value='" + valueString + "' readonly >");
     }
 
