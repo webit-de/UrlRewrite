@@ -26,7 +26,9 @@ namespace Hi.UrlRewrite.Processing
         var shortUrlPrefix = GetShortUrlPrefix(db);
 
         // don't redirect, if no prefix is configured, or the url does not start with the short url prefix
-        if (shortUrlPrefix.Equals(string.Empty) || !args.Url.FilePathWithQueryString.StartsWith("/" + shortUrlPrefix))
+        if (shortUrlPrefix.Equals(string.Empty) 
+            || !args.Url.FilePathWithQueryString.StartsWith("/" + shortUrlPrefix) 
+            || args.Url.FilePathWithQueryString.Trim('/').EndsWith(shortUrlPrefix)) // ensure that there is a token Present
         {
           return;
         }
