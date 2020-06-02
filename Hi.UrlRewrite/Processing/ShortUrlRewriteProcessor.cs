@@ -61,7 +61,7 @@ namespace Hi.UrlRewrite.Processing
     }
 
     /// <summary>
-    /// Extracts the shourt url token from the provided url
+    /// Extracts the short url token from the provided url
     /// </summary>
     /// <param name="url">The url</param>
     /// <returns>The short url token</returns>

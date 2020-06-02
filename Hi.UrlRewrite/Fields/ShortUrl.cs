@@ -1,4 +1,8 @@
-﻿using System.Web.UI;
+﻿using System.Linq;
+using System.Web.UI;
+using Hi.UrlRewrite.Helpers;
+using Sitecore.Configuration;
+using Sitecore.Diagnostics;
 using Control = Sitecore.Web.UI.HtmlControls.Control;
 
 namespace Hi.UrlRewrite.Fields
@@ -13,9 +17,34 @@ namespace Hi.UrlRewrite.Fields
     
     protected override void DoRender(HtmlTextWriter output)
     {
-      string err = null;
-      output.Write("<input" + GetControlAttributes() + "value='" + Value + "' readonly >");
+      // display the full url instead of only the token
+      var owningItem = Sitecore.Data.Database.GetDatabase("master").GetItem(ItemID);
       
+      var redirectFolderItem = ShortUrlHelpers.GetRedirectFolderItem(owningItem);
+      var valueString = GetHostname(owningItem) + "/" + redirectFolderItem.ShortUrlPrefix + "/" + Value;
+      
+      output.Write("<input" + GetControlAttributes() + "value='" + valueString + "' readonly >");
+    }
+
+    public string ItemID
+    {
+      get
+      {
+        return base.GetViewStateString("ItemID");
+      }
+      set
+      {
+        Assert.ArgumentNotNullOrEmpty(value, "value");
+        base.SetViewStateString("ItemID", value);
+      }
+    }
+
+    string GetHostname(Sitecore.Data.Items.Item item)
+    {
+      var siteInfos = Factory.GetSiteInfoList().Where(x => x.RootPath.ToLower().StartsWith("/sitecore/content/"));
+
+      return siteInfos?.FirstOrDefault(x => item.Paths.FullPath.StartsWith(x.ContentStartItem))?.TargetHostName;
+
     }
   }
 }

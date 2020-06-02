@@ -76,7 +76,7 @@ namespace Hi.UrlRewrite.Helpers
     /// </summary>
     /// <param name="item"></param>
     /// <returns>Th</returns>
-    private static RedirectFolderItem GetRedirectFolderItem(Item item)
+    public static RedirectFolderItem GetRedirectFolderItem(Item item)
     {
       var redirectFolderItem = item.Axes.GetAncestors().FirstOrDefault(a => a.TemplateID.Equals(new ID(RedirectFolderItem.TemplateId)));
 
