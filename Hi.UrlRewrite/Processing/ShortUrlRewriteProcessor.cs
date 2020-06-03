@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using Hi.UrlRewrite.Templates.Folders;
 using Sitecore;
 using Sitecore.Data;
 using Sitecore.Data.Fields;
@@ -9,6 +10,9 @@ using Sitecore.Web;
 
 namespace Hi.UrlRewrite.Processing
 {
+  /// <summary>
+  /// Processor for short url requests
+  /// </summary>
   public class ShortUrlRewriteProcessor : HttpRequestProcessor
   {
     public override void Process(HttpRequestArgs args)
@@ -36,7 +40,7 @@ namespace Hi.UrlRewrite.Processing
 
         // get the short url item for the provided token
         var token = ExtractShortUrlToken(args.Url.FilePathWithQueryString,shortUrlPrefix);
-        var query = Context.Site.ContentStartPath + "//*[@@templateid='{EA7922DB-83AD-49BA-AD53-F30F058CEE74}']";
+        var query = Context.Site.ContentStartPath + "//*[@@templateid='" + Constants.ShortUrl_ItemId + "']";
         var shortUrlItem = db.SelectItems(query)
           .FirstOrDefault(x => x.Fields[ID.Parse(Guid.Parse(Constants.ShortUrl_FieldId))].Value.Equals(token));
 
@@ -83,7 +87,7 @@ namespace Hi.UrlRewrite.Processing
     private static string GetShortUrlPrefix(Database db)
     {
       // find prefix in site context
-      var query = Context.Site.ContentStartPath + "//*[@@templateid='{CBE995D0-FCE0-4061-B807-B4BBC89962A7}']";
+      var query = Context.Site.ContentStartPath + "//*[@@templateid='" + RedirectFolderItem.TemplateId + "']";
       var rewriteFolderItem = db.SelectItems(query).FirstOrDefault();
       if (rewriteFolderItem != null)
       {
@@ -91,7 +95,7 @@ namespace Hi.UrlRewrite.Processing
       }
 
       // find global prefix
-      query = "sitecore/content//*[@@templateid='{CBE995D0-FCE0-4061-B807-B4BBC89962A7}']";
+      query = "sitecore/content//*[@@templateid='" + RedirectFolderItem.TemplateId + "']";
       rewriteFolderItem = db.SelectItems(query).FirstOrDefault();
 
       return rewriteFolderItem == null ? string.Empty : rewriteFolderItem.Fields[ID.Parse(Guid.Parse(Constants.ShortUrlPrefix_FieldId))].Value;
