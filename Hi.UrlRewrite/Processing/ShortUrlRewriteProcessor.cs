@@ -39,8 +39,9 @@ namespace Hi.UrlRewrite.Processing
 
 
         // get the short url item for the provided token
-        var token = ExtractShortUrlToken(args.Url.FilePathWithQueryString,shortUrlPrefix);
-        var query = Context.Site.ContentStartPath + "//*[@@templateid='" + Constants.ShortUrl_ItemId + "']";
+        var token = ExtractShortUrlToken(args.Url.FilePathWithQueryString, shortUrlPrefix);
+        var query = Context.Site.ContentStartPath + "//*[@@templateid='" + Constants.ShortUrl_ItemId + "']" +
+                    "|/sitecore/content/*[@@templateid='" + RedirectFolderItem.TemplateId + "']//*[@@templateid='" + Constants.ShortUrl_ItemId + "']";
         var shortUrlItem = db.SelectItems(query)
           .FirstOrDefault(x => x.Fields[ID.Parse(Guid.Parse(Constants.ShortUrl_FieldId))].Value.Equals(token));
 
@@ -87,7 +88,7 @@ namespace Hi.UrlRewrite.Processing
     private static string GetShortUrlPrefix(Database db)
     {
       // find prefix in site context
-      var query = Context.Site.ContentStartPath + "//*[@@templateid='" + RedirectFolderItem.TemplateId + "']";
+      var query = Context.Site.ContentStartPath + "/*[@@templateid='" + RedirectFolderItem.TemplateId + "']";
       var rewriteFolderItem = db.SelectItems(query).FirstOrDefault();
       if (rewriteFolderItem != null)
       {
@@ -95,7 +96,7 @@ namespace Hi.UrlRewrite.Processing
       }
 
       // find global prefix
-      query = "sitecore/content//*[@@templateid='" + RedirectFolderItem.TemplateId + "']";
+      query = "/sitecore/content/*[@@templateid='" + RedirectFolderItem.TemplateId + "']";
       rewriteFolderItem = db.SelectItems(query).FirstOrDefault();
 
       return rewriteFolderItem == null ? string.Empty : rewriteFolderItem.Fields[ID.Parse(Guid.Parse(Constants.ShortUrlPrefix_FieldId))].Value;
