@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using Hi.UrlRewrite.Templates.Folders;
 using Sitecore.Data;
 using Sitecore.Data.Items;
@@ -58,24 +59,24 @@ namespace Hi.UrlRewrite.Helpers
       // if no length is provided use a length of 4
       length = length == 0 ? 4 : length;
 
-      var resultToken = string.Empty;
+      var resultToken = new StringBuilder(length);
 
       // add random characters to the token until it has the correct length
       var random = new Random();
       for (int i = 0; i < length; i++)
       {
         var randomIndex = random.Next(Constants.ShortUrlTokenCharacters.Length);
-        resultToken += Constants.ShortUrlTokenCharacters[randomIndex];
+        resultToken.Append(Constants.ShortUrlTokenCharacters[randomIndex]);
       }
 
-      return resultToken;
+      return resultToken.ToString();
     }
 
     /// <summary>
     /// Get the parent RedirectFolderItem
     /// </summary>
-    /// <param name="item"></param>
-    /// <returns>Th</returns>
+    /// <param name="item">The Short Url Item</param>
+    /// <returns>The parent redirect folder item.</returns>
     public static RedirectFolderItem GetRedirectFolderItem(Item item)
     {
       var redirectFolderItem = item.Axes.GetAncestors().FirstOrDefault(a => a.TemplateID.Equals(new ID(RedirectFolderItem.TemplateId)));
