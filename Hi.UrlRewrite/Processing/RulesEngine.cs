@@ -96,6 +96,19 @@ namespace Hi.UrlRewrite.Processing
               rules.Add(inboundRule);
             }
           }
+          else if (ruleOrFolderItem.TemplateID == new ID(new Guid(ShortUrlItem.TemplateId)))
+          {
+            var shortUrlItem = new ShortUrlItem(ruleOrFolderItem);
+
+            Log.Debug(this, db, "Loading ShortUrl: {0}", shortUrlItem.Name);
+
+            var inboundRule = CreateInboundRuleFromShortUrlItem(shortUrlItem, redirectFolderItem);
+
+            if (inboundRule != null && inboundRule.Enabled)
+            {
+              rules.Add(inboundRule);
+            }
+          }
           else if (ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectSubFolderItem.TemplateId))
                    || ruleOrFolderItem.TemplateID == new ID(new Guid(RedirectFolderItem.TemplateId)))
           {
@@ -208,8 +221,51 @@ namespace Hi.UrlRewrite.Processing
 
             return inboundRule;
         }
+    internal InboundRule CreateInboundRuleFromShortUrlItem(ShortUrlItem shortUrlItem, RedirectFolderItem redirectFolderItem)
+    {
+      //var inboundRulePattern = string.Format("^{0}/?$", shortUrlItem.Path.Value);
+      var inboundRulePattern = string.Format("^{0}/?$", shortUrlItem.ShortUrl);
 
-        internal InboundRule CreateInboundRuleFromInboundRuleItem(InboundRuleItem inboundRuleItem, RedirectFolderItem redirectFolderItem)
+      var siteNameRestriction = GetSiteNameRestriction(redirectFolderItem);
+
+      var redirectTo = shortUrlItem.Target;
+      string actionRewriteUrl;
+      Guid? rewriteItem;
+      string redirectItemAnchor;
+
+      GetRedirectUrlOrItemId(redirectTo, out actionRewriteUrl, out rewriteItem, out redirectItemAnchor);
+
+      Log.Debug(this, shortUrlItem.Database, "Creating Inbound Rule From Short Url Item - {0} - id: {1} actionRewriteUrl: {2} redirectItem: {3}", shortUrlItem.Name, shortUrlItem.ID.Guid, actionRewriteUrl, rewriteItem);
+
+      var inboundRule = new InboundRule
+      {
+        Action = new Redirect
+        {
+          AppendQueryString = true,
+          Name = "Redirect",
+          StatusCode = RedirectStatusCode.Permanent,
+          RewriteUrl = actionRewriteUrl,
+          RewriteItemId = rewriteItem,
+          RewriteItemAnchor = redirectItemAnchor,
+          StopProcessingOfSubsequentRules = false,
+          HttpCacheability = HttpCacheability.NoCache
+        },
+        SiteNameRestriction = siteNameRestriction,
+        Enabled = shortUrlItem.BaseEnabledItem.Enabled.Checked,
+        IgnoreCase = false,
+        ItemId = shortUrlItem.ID.Guid,
+        ConditionLogicalGrouping = LogicalGrouping.MatchAll,
+        Name = shortUrlItem.Name,
+        Pattern = inboundRulePattern,
+        MatchType = MatchType.MatchesThePattern,
+        Using = Using.ExactMatch,
+        SortOrder = shortUrlItem.SortOrder
+      };
+
+      return inboundRule;
+    }
+
+    internal InboundRule CreateInboundRuleFromInboundRuleItem(InboundRuleItem inboundRuleItem, RedirectFolderItem redirectFolderItem)
         {
             var siteNameRestriction = GetSiteNameRestriction(redirectFolderItem);
             var inboundRule = inboundRuleItem.ToInboundRule(siteNameRestriction);
