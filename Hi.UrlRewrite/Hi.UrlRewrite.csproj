@@ -212,6 +212,7 @@
     <Compile Include="Templates\Conditions\Types\CheckIfInputStringTypeItem.cs" />
     <Compile Include="Templates\Conditions\Types\ConditionInputTypeItem.cs" />
     <Compile Include="Templates\Conditions\Types\LogicalGroupingTypeItem.cs" />
+    <Compile Include="Templates\Inbound\ShortUrlItem.cs" />
     <Compile Include="Templates\Match\MatchServerVariableItem.cs" />
     <Compile Include="Templates\Match\MatchTagItem.cs" />
     <Compile Include="Templates\Match\MatchResponseTagsItem.cs" />
@@ -242,6 +243,7 @@
     <Compile Include="Templates\Action\RedirectItem.cs" />
     <Compile Include="Templates\Conditions\ConditionItem.cs" />
     <Compile Include="Templates\Folders\FolderItem.cs" />
+    <Compile Include="Templates\Settings\ShortUrlSetting.cs" />
     <Compile Include="TokenHelper.cs" />
     <Compile Include="Tokens.cs" />
   </ItemGroup>
