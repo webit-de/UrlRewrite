@@ -386,7 +386,7 @@ namespace Hi.UrlRewrite.Processing
         {
             var cache = GetRulesCache();
             IEnumerable<IBaseRule> baseRules = null;
-            if (item.IsSimpleRedirectItem() || item.IsInboundRuleItem())
+            if (item.IsSimpleRedirectItem() || item.IsShortUrlItem() || item.IsInboundRuleItem())
             {
                 baseRules = cache.GetInboundRules();
                 if (baseRules == null)
@@ -412,7 +412,7 @@ namespace Hi.UrlRewrite.Processing
                 Log.Debug(this, item.Database, "Updating Rules Cache - count: {0}", rules.Count());
 
                 // update the cache
-                if (item.IsSimpleRedirectItem() || item.IsInboundRuleItem())
+                if (item.IsSimpleRedirectItem() || item.IsShortUrlItem() || item.IsInboundRuleItem())
                 {
                     cache.SetInboundRules(rules.OfType<InboundRule>());
                 }
@@ -437,6 +437,10 @@ namespace Hi.UrlRewrite.Processing
             else if (item.IsSimpleRedirectItem())
             {
                 newRule = CreateInboundRuleFromSimpleRedirectItem(item, redirectFolderItem);
+            }
+            else if (item.IsShortUrlItem())
+            {
+                newRule = CreateInboundRuleFromShortUrlItem(item, redirectFolderItem);
             }
             else if (item.IsOutboundRuleItem())
             {

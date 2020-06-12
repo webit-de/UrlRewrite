@@ -92,6 +92,23 @@ namespace Hi.UrlRewrite.Processing
               rulesEngine.ClearInboundRuleCache();
             }
           }
+          else if (item.IsShortUrlItem())
+          {
+            if (rulesEngine.CanRefreshInboundRule(item, redirectFolderItem))
+            {
+              Log.Info(this, db, "Refreshing Short Url [{0}] after save event", item.Paths.FullPath);
+
+              rulesEngine.RefreshRule(item, redirectFolderItem);
+            }
+            else
+            {
+              Log.Info(this, db,
+                "Simple Redirect [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
+                item.Paths.FullPath);
+
+              rulesEngine.ClearInboundRuleCache();
+            }
+          }
           else if (item.IsInboundRuleItem())
           {
             if (rulesEngine.CanRefreshInboundRule(item, redirectFolderItem))
@@ -194,7 +211,7 @@ namespace Hi.UrlRewrite.Processing
         using (new SecurityDisabler())
         {
 
-          if (item.IsInboundRuleItem() || item.IsSimpleRedirectItem())
+          if (item.IsInboundRuleItem() || item.IsSimpleRedirectItem() || item.IsShortUrlItem())
           {
             Log.Info(this, item.Database, "Clearing inbound rules cache after delete event");
 

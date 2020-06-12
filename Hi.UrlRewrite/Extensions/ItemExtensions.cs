@@ -880,6 +880,11 @@ namespace Hi.UrlRewrite
             return !IsTemplate(item) && item.TemplateID.ToString().Equals(SimpleRedirectItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
         }
 
+        public static bool IsShortUrlItem(this Item item)
+        {
+            return !IsTemplate(item) && item.TemplateID.ToString().Equals(ShortUrlItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
+        }
+
         public static bool IsInboundRuleItem(this Item item)
         {
             return !IsTemplate(item) && item.TemplateID.ToString().Equals(InboundRuleItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
