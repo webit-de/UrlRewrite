@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using System.Web.UI;
-using Hi.UrlRewrite.Helpers;
+using Hi.UrlRewrite.Templates.Inbound;
 using Sitecore.Configuration;
 using Sitecore.Diagnostics;
 using Control = Sitecore.Web.UI.HtmlControls.Control;
@@ -18,16 +18,20 @@ namespace Hi.UrlRewrite.Fields
     protected override void DoRender(HtmlTextWriter output)
     {
       // display the full url instead of only the token
-      var owningItem = Sitecore.Data.Database.GetDatabase("master").GetItem(ItemID);
-
-      var redirectFolderItem = ShortUrlHelpers.GetRedirectFolderItem(owningItem);
-
-      var valueString = string.Empty;
+      var owningItem = new ShortUrlItem(Sitecore.Data.Database.GetDatabase("master").GetItem(ItemID));
+      
+      string valueString;
 
       // only display a value, if a token is assigned
-      if (Value != string.Empty)
+      if (Value != string.Empty && owningItem.UrlSetting != null)
       {
-        valueString = GetHostname(owningItem) + "/" + redirectFolderItem.ShortUrlPrefix + "/" + Value;
+        valueString = GetHostname(owningItem) + "/" + owningItem.UrlSetting.ShortUrlPrefix + "/" + Value;
+      }
+      else
+      {
+        {
+          valueString = "Please select a Short Url Settings item.";
+        }
       }
 
       output.Write("<input" + GetControlAttributes() + "value='" + valueString + "' readonly >");

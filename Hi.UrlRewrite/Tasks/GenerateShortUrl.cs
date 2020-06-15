@@ -1,5 +1,6 @@
 ﻿
 using System;
+using Hi.UrlRewrite.Templates.Inbound;
 using Sitecore.Data;
 using Sitecore.SecurityModel;
 using Sitecore.Shell.Framework.Commands;
@@ -17,7 +18,8 @@ namespace Hi.UrlRewrite.Tasks
       if (context.Items.Length != 1 || context.Items[0] == null)
         return;
 
-      var shortUrl = Helpers.ShortUrlHelpers.GenerateShortUrl(context.Items[0]);
+      var shortUrlItem = new ShortUrlItem(context.Items[0]);
+      var shortUrl = Helpers.ShortUrlHelpers.GenerateShortUrl(shortUrlItem);
       using (new SecurityDisabler())
       {
         context.Items[0].Editing.BeginEdit();

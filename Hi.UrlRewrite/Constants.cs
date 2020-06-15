@@ -54,5 +54,8 @@ namespace Hi.UrlRewrite
         public const string RedirectEventItemId = "{1d668f23-eeba-4bd3-93b3-94861ed42060}";
 
         public const string ShortUrlTokenCharacters = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789";
-    }
+        
+        public const string ShortUrl_FieldId = "{410EAE33-FD47-415C-AFDC-61DEA4BEAF8F}";
+        public const string ShortUrlTarget_FieldId = "{7ACDD68F-CBEA-41D2-818D-BC777CD5D799}";
+  }
 }

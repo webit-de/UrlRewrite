@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using Hi.UrlRewrite.Templates.Folders;
+using Hi.UrlRewrite.Templates.Inbound;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 
@@ -14,11 +15,11 @@ namespace Hi.UrlRewrite.Helpers
     /// </summary>
     /// <param name="token">The token to check</param>
     /// <returns>True if the token exists, False otherwise</returns>
-    public static bool DoesTokenExist(string token, RedirectFolderItem redirectFolderItem)
+    public static bool DoesTokenExist(string token, ShortUrlItem shortUrlItem)
     {
       var query = "/sitecore/content//*[@@templateid='{EA7922DB-83AD-49BA-AD53-F30F058CEE74}']";
-      var shortUrlItems = redirectFolderItem.Database.SelectItems(query);
-      return shortUrlItems.Any(x => x.Fields[ID.Parse(Guid.Parse(Constants.ShortUrlTarget_FieldId))].Value.Equals(redirectFolderItem.ShortUrlPrefix + "/" + token));
+      var shortUrlItems = shortUrlItem.Database.SelectItems(query).Select(x => new ShortUrlItem(x));
+      return shortUrlItems.Any(x => x.ShortUrl.Equals(shortUrlItem.UrlSetting.ShortUrlPrefix + "/" + token));
     }
 
     /// <summary>
@@ -26,11 +27,10 @@ namespace Hi.UrlRewrite.Helpers
     /// </summary>
     /// <param name="item">The Short Url Item</param>
     /// <returns>Random unique short url</returns>
-    public static string GenerateShortUrl(Item item)
+    public static string GenerateShortUrl(ShortUrlItem item)
     {
       string resultToken;
 
-      var redirectFolderItem = GetRedirectFolderItem(item);
       // generate random tokens until a non existing token is found
       var numTries = 10;
       do
@@ -41,9 +41,9 @@ namespace Hi.UrlRewrite.Helpers
           return string.Empty;
         }
 
-        resultToken = GenerateToken(redirectFolderItem.ShortUrlTokenLength);
+        resultToken = GenerateToken(item.UrlSetting.TokenLength);
         numTries--;
-      } while (DoesTokenExist(resultToken, redirectFolderItem));
+      } while (DoesTokenExist(resultToken, item));
 
 
       return resultToken;

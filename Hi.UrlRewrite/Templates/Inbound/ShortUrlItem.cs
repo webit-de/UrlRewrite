@@ -5,6 +5,7 @@ using System.Web;
 using Hi.UrlRewrite.Templates.Settings;
 using Sitecore.Data.Fields;
 using Sitecore.Data.Items;
+using Sitecore.StringExtensions;
 
 namespace Hi.UrlRewrite.Templates.Inbound
 {
@@ -51,8 +52,7 @@ namespace Hi.UrlRewrite.Templates.Inbound
     {
       get
       {
-        var urlSetting = new ShortUrlSetting(UrlSetting.TargetItem);
-        return urlSetting.ShortUrlPrefix.Value + InnerItem.Fields["Short Url"];
+        return UrlSetting?.ShortUrlPrefix + "/" + InnerItem.Fields["Short Url"];
       }
     }
 
@@ -65,13 +65,17 @@ namespace Hi.UrlRewrite.Templates.Inbound
       }
     }
 
-    public LinkField UrlSetting
+    public ShortUrlSetting UrlSetting
     {
       get
       {
-        return new LinkField(InnerItem.Fields["Short Url Settings"]);
+        var settingsItemId = InnerItem.Fields["Short Url Settings"]?.Value;
+
+        return settingsItemId.IsNullOrEmpty() ? null :
+          new ShortUrlSetting(InnerItem.Database.GetItem(Sitecore.Data.ID.Parse(Guid.Parse(settingsItemId))));
       }
     }
+
     public int SortOrder
     {
       get

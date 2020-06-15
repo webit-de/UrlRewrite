@@ -32,7 +32,7 @@ namespace Hi.UrlRewrite.Templates.Settings
 
     #region Field Instance Methods
 
-    public TextField ShortUrlPrefix => InnerItem.Fields["Short Url Prefix"];
+    public string ShortUrlPrefix => InnerItem.Fields["Prefix"].Value;
 
     public int TokenLength => int.Parse(InnerItem.Fields["Token Length"].Value);
 
