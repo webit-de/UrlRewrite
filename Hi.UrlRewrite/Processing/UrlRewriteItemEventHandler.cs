@@ -103,7 +103,7 @@ namespace Hi.UrlRewrite.Processing
             else
             {
               Log.Info(this, db,
-                "Simple Redirect [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
+                "Short Url [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
                 item.Paths.FullPath);
 
               rulesEngine.ClearInboundRuleCache();

@@ -17,7 +17,7 @@ namespace Hi.UrlRewrite.Helpers
     /// <returns>True if the token exists, False otherwise</returns>
     public static bool DoesTokenExist(string token, ShortUrlItem shortUrlItem)
     {
-      var query = "/sitecore/content//*[@@templateid='{EA7922DB-83AD-49BA-AD53-F30F058CEE74}']";
+      var query = $"/sitecore/content//*[@@templateid='{ShortUrlItem.TemplateId}']";
       var shortUrlItems = shortUrlItem.Database.SelectItems(query).Select(x => new ShortUrlItem(x));
       return shortUrlItems.Any(x => x.ShortUrl.Equals(shortUrlItem.UrlSetting.ShortUrlPrefix + "/" + token));
     }
