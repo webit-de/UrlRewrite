@@ -30,7 +30,9 @@ namespace Hi.UrlRewrite.Fields
       else
       {
         {
-          valueString = "Please select a Short Url Settings item.";
+          valueString = owningItem.UrlSetting == null
+            ? "Please select a Short Url Settings item."
+            : "No Short Url has been generated yet.";
         }
       }
 
