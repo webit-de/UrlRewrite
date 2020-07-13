@@ -9,6 +9,13 @@ namespace Hi.UrlRewrite.Extensions
       ID.Parse(Guid.Parse("{5A3D2D3B-C56F-4AEF-84E8-08FCB9598BFE}"));
 
     public static readonly ID RedirectImportDialogueScript =
-      ID.Parse(Guid.Parse("{5A3D2D3B-C56F-4AEF-84E8-08FCB9598BFE}"));
+      ID.Parse(Guid.Parse("{B4D24E93-23D2-44C8-BFFF-8F01B6EE8FA3}"));
+
+    public static readonly string ShortUrlType = "SHORTURL";
+    public static readonly string SimpleRedirectType = "SIMPLEREDIRECT";
+
+    public static readonly string EnabledStatus = "ENABLED";
+    public static readonly string DisabledStatus = "DISABLED";
+    public static readonly string DeleteStatus = "DELETE";
   }
 }
