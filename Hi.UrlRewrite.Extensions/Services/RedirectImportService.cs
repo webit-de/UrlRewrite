@@ -17,16 +17,6 @@ namespace Hi.UrlRewrite.Extensions.Services
   {
     public List<string> Warnings = new List<string>();
 
-    /// <summary>
-    /// Generate a csv file for the selected items
-    /// </summary>
-    /// <param name="redirects">The redirect items to generate i csv file from</param>
-    public void GenerateCsv(IEnumerable<InboundRule> redirects)
-    {
-
-    }
-
-
     public void GenerateRedirectsFromCsv(Stream csvStream, Item rootItem)
     {
       try
@@ -55,6 +45,26 @@ namespace Hi.UrlRewrite.Extensions.Services
         return;
       }
 
+      // if DELETE status is set, delete the item
+      if (redirect.Status.ToUpper() == Constants.ImportStatus.DELETE.ToString())
+      {
+        rootItem?.Recycle();
+        return;
+      }
+
+      // if the item does not exist, create a new one
+      if (existingItem == null)
+      {
+        CreateRedirectItem(redirect,rootItem);
+        return;
+      }
+
+      UpdateRedirectItem(redirect, existingItem);
+    }
+
+    private void CreateRedirectItem(RedirectCsvEntry redirect, Item rootItem)
+    {
+      // create a new redirect item
       Enum.TryParse(redirect.Type, true, out Constants.RedirectType typeEnum);
       switch (typeEnum)
       {
@@ -115,6 +125,11 @@ namespace Hi.UrlRewrite.Extensions.Services
           Warnings.Add("There has been an error creating the item for '" + redirect.Name + "': \n" + e.Message);
         }
       }
+    }
+
+    private void UpdateRedirectItem(RedirectCsvEntry redirect, Item existingItem)
+    {
+      throw new NotImplementedException();
     }
 
     private string FindShortUrlSettings(string prefix)
@@ -187,9 +202,15 @@ namespace Hi.UrlRewrite.Extensions.Services
     /// Check if a mandatory field is empty.
     /// </summary>
     /// <param name="redirect">The imported redirect</param>
-    /// <returns>True if all mandatory fields have a </returns>
+    /// <returns>True if all mandatory fields have a value</returns>
     private bool CheckEmptyFields(RedirectCsvEntry redirect)
     {
+      // if the item should be deleted, don't check field values
+      if (redirect.Status.ToUpper() == Constants.ImportStatus.DELETE.ToString())
+      {
+        return true;
+      }
+
       if (redirect.Type.IsNullOrEmpty() ||
           redirect.Name.IsNullOrEmpty() ||
           redirect.Path.IsNullOrEmpty() ||
@@ -201,6 +222,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         Warnings.Add("Redirect '" + redirect.Name + "' has at least one empty field and can not be imported.");
         return false;
       }
+
       return true;
     }
 
