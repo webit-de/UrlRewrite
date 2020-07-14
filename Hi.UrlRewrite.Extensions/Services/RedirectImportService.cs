@@ -128,7 +128,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           shortUrl["ShortUrl"] = GetToken(redirect);
           shortUrl["Target"] = GetRedirectTarget(redirect);
           shortUrl["Enabled"] = GetRedirectStatus(redirect);
-          shortUrl["Short Url Settings"] = FindShortUrlSettings(redirect.ShortUrlPrefix);
+          shortUrl["Short Url Settings"] = FindShortUrlSettings(redirect.ShortUrlPrefix, rootItem);
           shortUrl.Editing.EndEdit();
         }
         catch (Exception e)
@@ -161,9 +161,18 @@ namespace Hi.UrlRewrite.Extensions.Services
       return redirect.PathToken;
     }
 
-    private string FindShortUrlSettings(string prefix)
+    private string FindShortUrlSettings(string prefix, Item rootItem)
     {
-      throw new NotImplementedException();
+      var query = "/sitecore/content//*[@@templateid='" + Templates.Settings.ShortUrlSetting.TemplateId + "']";
+      var shortUrlSettings = Sitecore.Context.Database.SelectItems(query).FirstOrDefault(x => x["Prefix"] == prefix);
+
+      if (shortUrlSettings == null)
+      {
+        Warnings.Add("Could not find matching Short URL Settings for '" + rootItem.Name + "'. The field has been left empty.");
+        return string.Empty;
+      }
+
+      return shortUrlSettings.ID.ToString();
     }
 
     private bool CheckValidity(RedirectCsvEntry redirect, out Item existingItem)

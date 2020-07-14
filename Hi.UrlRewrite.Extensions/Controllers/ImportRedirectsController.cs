@@ -11,7 +11,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
 {
   public class ImportRedirectsController : SitecoreController
   {
-    public ActionResult ImportRedirects(string csvItemId, string rootFolderId = "")
+    public ActionResult ImportRedirects(string csvItemId, string rootFolderId)
     {
       using (new SiteContextSwitcher(SiteContextFactory.GetSiteContext("master")))
       {
