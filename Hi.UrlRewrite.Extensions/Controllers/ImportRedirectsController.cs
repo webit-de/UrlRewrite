@@ -5,6 +5,7 @@ using Hi.UrlRewrite.Extensions.Services;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 using Sitecore.Mvc.Controllers;
+using Sitecore.Sites;
 
 namespace Hi.UrlRewrite.Extensions.Controllers
 {
@@ -12,17 +13,19 @@ namespace Hi.UrlRewrite.Extensions.Controllers
   {
     public ActionResult ImportRedirects(string csvItemId, string rootFolderId = "")
     {
-      // since this route is only mapped for CM and Standalone, the master database can be accessed directly
-      var db = Sitecore.Configuration.Factory.GetDatabase("master");
-      //var rootFolder = db.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
-      var csvItem = db.GetItem(ID.Parse(Guid.Parse(csvItemId)));
-      var csvMediaItem = new Sitecore.Data.Items.MediaItem(csvItem);
+      using (new SiteContextSwitcher(SiteContextFactory.GetSiteContext("master")))
+      {
+        //var rootFolder = db.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
+        var csvItem = Sitecore.Context.Database.GetItem(ID.Parse(Guid.Parse(csvItemId)));
+        var csvMediaItem = new MediaItem(csvItem);
 
-      var stream = csvMediaItem.GetMediaStream();
+        var stream = csvMediaItem.GetMediaStream();
 
-      RedirectImportService.GenerateRedirectsFromCsv(stream);
+        RedirectImportService importService = new RedirectImportService();
+        importService.GenerateRedirectsFromCsv(stream);
 
-      throw new NotImplementedException();
+        throw new NotImplementedException();
+      }
     }
   }
 }
