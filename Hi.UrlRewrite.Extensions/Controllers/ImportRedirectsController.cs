@@ -15,14 +15,14 @@ namespace Hi.UrlRewrite.Extensions.Controllers
     {
       using (new SiteContextSwitcher(SiteContextFactory.GetSiteContext("master")))
       {
-        //var rootFolder = db.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
+        var rootFolder = Sitecore.Context.Database.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
         var csvItem = Sitecore.Context.Database.GetItem(ID.Parse(Guid.Parse(csvItemId)));
         var csvMediaItem = new MediaItem(csvItem);
 
         var stream = csvMediaItem.GetMediaStream();
 
         RedirectImportService importService = new RedirectImportService();
-        importService.GenerateRedirectsFromCsv(stream);
+        importService.GenerateRedirectsFromCsv(stream, rootFolder);
 
         throw new NotImplementedException();
       }

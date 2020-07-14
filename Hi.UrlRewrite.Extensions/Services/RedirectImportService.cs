@@ -26,7 +26,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     }
 
 
-    public void GenerateRedirectsFromCsv(Stream csvStream)
+    public void GenerateRedirectsFromCsv(Stream csvStream, Item rootItem)
     {
       try
       {
@@ -37,7 +37,7 @@ namespace Hi.UrlRewrite.Extensions.Services
 
           foreach (var redirect in csv.GetRecords<RedirectCsvEntry>())
           {
-            ProcessRedirectItem(redirect);
+            ProcessRedirectItem(redirect, rootItem);
           }
         }
       }
@@ -47,7 +47,7 @@ namespace Hi.UrlRewrite.Extensions.Services
       }
     }
 
-    private void ProcessRedirectItem(RedirectCsvEntry redirect)
+    private void ProcessRedirectItem(RedirectCsvEntry redirect, Item rootItem)
     {
       if (!CheckValidity(redirect, out var existingItem))
       {
@@ -58,10 +58,10 @@ namespace Hi.UrlRewrite.Extensions.Services
       switch (typeEnum)
       {
         case Constants.RedirectType.SIMPLEREDIRECT:
-          CreateSimpleRedirectItem(redirect);
+          CreateSimpleRedirectItem(redirect, rootItem);
           return;
         case Constants.RedirectType.SHORTURL:
-          CreateShortUrlItem(redirect);
+          CreateShortUrlItem(redirect, rootItem);
           return;
         default:
           Warnings.Add("Redirect " + redirect.Name + " has an invalid redirect type and can not be imported.");
@@ -69,43 +69,69 @@ namespace Hi.UrlRewrite.Extensions.Services
       }
     }
 
-    private void CreateSimpleRedirectItem(RedirectCsvEntry redirect)
+    private void CreateSimpleRedirectItem(RedirectCsvEntry redirect, Item rootItem)
     {
       using (new Sitecore.SecurityModel.SecurityDisabler())
       {
+        string enabled = redirect.Status.ToLower() == "enabled" ? "1" : "0";
+
         try
         {
           var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
-          Item simpleRedirect = GetParentItem(redirect).Add(redirect.Name, template);
-
-          if (simpleRedirect == null)
-          {
-          }
-
+          Item simpleRedirect = CreateFolderStructure(redirect, rootItem).Add(redirect.Name, template);
+          simpleRedirect.Editing.BeginEdit();
+          simpleRedirect["Path"] = redirect.PathToken;
+          simpleRedirect["Target"] = redirect.Target;
+          simpleRedirect["Enabled"] = enabled;
+          simpleRedirect.Editing.EndEdit();
         }
         catch (Exception e)
         {
-          Warnings.Add("There has been an error creating the item for '" + redirect.Name + "'.");
+          Warnings.Add("There has been an error creating the item for '" + redirect.Name + "': \n" + e.Message);
         }
       }
     }
 
-    private void CreateShortUrlItem(RedirectCsvEntry redirect)
+    private void CreateShortUrlItem(RedirectCsvEntry redirect, Item rootItem)
     {
+      using (new Sitecore.SecurityModel.SecurityDisabler())
+      {
+        string enabled = redirect.Status.ToLower() == "enabled" ? "1" : "0";
+
+        try
+        {
+          var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.ShortUrlItem.TemplateId)));
+          Item simpleRedirect = CreateFolderStructure(redirect, rootItem).Add(redirect.Name, template);
+          simpleRedirect.Editing.BeginEdit();
+          simpleRedirect["ShortUrl"] = redirect.PathToken;
+          simpleRedirect["Target"] = redirect.Target;
+          simpleRedirect["Enabled"] = enabled;
+          simpleRedirect["Short Url Settings"] = FindShortUrlSettings(redirect.ShortUrlPrefix);
+          simpleRedirect.Editing.EndEdit();
+        }
+        catch (Exception e)
+        {
+          Warnings.Add("There has been an error creating the item for '" + redirect.Name + "': \n" + e.Message);
+        }
+      }
     }
 
+    private string FindShortUrlSettings(string prefix)
+    {
+      throw new NotImplementedException();
+    }
 
     private bool CheckValidity(RedirectCsvEntry redirect, out Item existingItem)
     {
       bool result = true;
 
       // check validity independent from existing items
-      if (!CheckEmptyFields(redirect))
+      if (!CheckValidId(redirect, out existingItem) || !CheckEmptyFields(redirect))
       {
         result = false;
       }
 
-      CheckValidId(redirect, out existingItem);
+      
 
       if (existingItem == null)
       {
@@ -122,7 +148,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     }
 
     /// <summary>
-    /// Check if the redirect item has the same type as the imported one
+    /// Check if the redirect item has the same type as the imported one.
     /// </summary>
     /// <param name="redirect">The imported redirect</param>
     /// <param name="existingItem">The existing redirect item</param>
@@ -157,7 +183,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     }
 
     /// <summary>
-    /// Check if a mandatory field is empty
+    /// Check if a mandatory field is empty.
     /// </summary>
     /// <param name="redirect">The imported redirect</param>
     /// <returns>True if all mandatory fields have a </returns>
@@ -178,7 +204,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     }
 
     /// <summary>
-    /// Get the existing item with the same ID, if the id is valid and
+    /// Check if the id is valid. Write the item in the out parameter if valid and an item with the id exists.
     /// </summary>
     /// <param name="redirect">The imported redirect</param>
     /// <param name="existingItem">The existing item</param>
@@ -203,11 +229,11 @@ namespace Hi.UrlRewrite.Extensions.Services
     }
 
     /// <summary>
-    /// Gets the for the imported redirect based on the provided path
+    /// Gets the for the imported redirect based on the provided path.
     /// </summary>
     /// <param name="redirect">The imported redirect</param>
     /// <returns>The parent item</returns>
-    private Item GetParentItem(RedirectCsvEntry redirect)
+    private Item CreateFolderStructure(RedirectCsvEntry redirect, Item rootItem)
     {
       throw new NotImplementedException();
     }
