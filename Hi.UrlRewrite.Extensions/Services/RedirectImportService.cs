@@ -90,14 +90,14 @@ namespace Hi.UrlRewrite.Extensions.Services
             simpleRedirect.MoveTo(parentFolder);
           }
           simpleRedirect.Editing.BeginEdit();
-          simpleRedirect["Path"] = redirect.PathToken;
-          simpleRedirect["Target"] = redirect.Target;
+          simpleRedirect["Path"] = GetPath(redirect);
+          simpleRedirect["Target"] = GetRedirectTarget(redirect);
           simpleRedirect["Enabled"] = GetRedirectStatus(redirect);
           simpleRedirect.Editing.EndEdit();
         }
         catch (Exception e)
         {
-          Warnings.Add("There has been an error processing the item for Simple Redirect '" + redirect.Name + "': \n" + e.Message);
+          Warnings.Add("There has been an error processing the item for Simple Redirect '" + redirect.Name + "':\n" + e.Message);
         }
       }
     }
@@ -125,8 +125,8 @@ namespace Hi.UrlRewrite.Extensions.Services
           }
 
           shortUrl.Editing.BeginEdit();
-          shortUrl["ShortUrl"] = redirect.PathToken;
-          shortUrl["Target"] = redirect.Target;
+          shortUrl["ShortUrl"] = GetToken(redirect);
+          shortUrl["Target"] = GetRedirectTarget(redirect);
           shortUrl["Enabled"] = GetRedirectStatus(redirect);
           shortUrl["Short Url Settings"] = FindShortUrlSettings(redirect.ShortUrlPrefix);
           shortUrl.Editing.EndEdit();
@@ -141,6 +141,24 @@ namespace Hi.UrlRewrite.Extensions.Services
     private static string GetRedirectStatus(RedirectCsvEntry redirect)
     {
       return redirect.Status.ToUpper() == Constants.ImportStatus.ENABLED.ToString() ? "1" : "0";
+    }
+
+    private static string GetRedirectTarget(RedirectCsvEntry redirect)
+    {
+      // TODO: warn if target does not exist
+      return redirect.Target;
+    }
+
+    private static string GetPath(RedirectCsvEntry redirect)
+    {
+      // TODO: check uniqueness
+      return redirect.PathToken;
+    }
+
+    private static string GetToken(RedirectCsvEntry redirect)
+    {
+      //TODO: check uniqueness
+      return redirect.PathToken;
     }
 
     private string FindShortUrlSettings(string prefix)
