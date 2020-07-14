@@ -5,7 +5,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using CsvHelper;
-using Hi.UrlRewrite.Entities.Rules;
 using Hi.UrlRewrite.Extensions.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
@@ -28,19 +27,20 @@ namespace Hi.UrlRewrite.Extensions.Services
 
           foreach (var redirect in csv.GetRecords<RedirectCsvEntry>())
           {
-            ProcessRedirectItem(redirect, rootItem);
+            ProcessRedirect(redirect, rootItem);
           }
         }
       }
       catch (Exception e)
       {
+        Warnings.Add("There has been an error parsing the CSV file:\n" + e.Message);
         throw;
       }
     }
 
-    private void ProcessRedirectItem(RedirectCsvEntry redirect, Item rootItem)
+    private void ProcessRedirect(RedirectCsvEntry redirect, Item rootItem)
     {
-      if (!CheckValidity(redirect, out var existingItem))
+      if (!CheckValidity(redirect, out var existingRedirect))
       {
         return;
       }
@@ -52,27 +52,15 @@ namespace Hi.UrlRewrite.Extensions.Services
         return;
       }
 
-      // if the item does not exist, create a new one
-      if (existingItem == null)
-      {
-        CreateRedirectItem(redirect,rootItem);
-        return;
-      }
-
-      UpdateRedirectItem(redirect, existingItem);
-    }
-
-    private void CreateRedirectItem(RedirectCsvEntry redirect, Item rootItem)
-    {
-      // create a new redirect item
+      // update redirect or create a new one
       Enum.TryParse(redirect.Type, true, out Constants.RedirectType typeEnum);
       switch (typeEnum)
       {
         case Constants.RedirectType.SIMPLEREDIRECT:
-          CreateSimpleRedirectItem(redirect, rootItem);
+          ProcessSimpleRedirect(redirect, rootItem, existingRedirect);
           return;
         case Constants.RedirectType.SHORTURL:
-          CreateShortUrlItem(redirect, rootItem);
+          ProcessShortUrlItem(redirect, rootItem, existingRedirect);
           return;
         default:
           Warnings.Add("Redirect " + redirect.Name + " has an invalid redirect type and can not be imported.");
@@ -80,56 +68,79 @@ namespace Hi.UrlRewrite.Extensions.Services
       }
     }
 
-    private void CreateSimpleRedirectItem(RedirectCsvEntry redirect, Item rootItem)
+    private void ProcessSimpleRedirect(RedirectCsvEntry redirect, Item rootItem, Item existingRedirect = null)
     {
       using (new Sitecore.SecurityModel.SecurityDisabler())
       {
-        string enabled = redirect.Status.ToLower() == "enabled" ? "1" : "0";
-
         try
         {
-          var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
-          Item simpleRedirect = CreateFolderStructure(redirect, rootItem).Add(redirect.Name, template);
+          Item simpleRedirect;
+          var parentFolder = CreateFolderStructure(redirect, rootItem);
+
+          // if no redirect with the id is existing, create a new one
+          if (existingRedirect == null)
+          {
+            var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
+            simpleRedirect = CreateFolderStructure(redirect, rootItem).Add(redirect.Name, template);
+          }
+          // modify the existing one otherwise
+          else
+          {
+            simpleRedirect = existingRedirect;
+            simpleRedirect.MoveTo(parentFolder);
+          }
           simpleRedirect.Editing.BeginEdit();
           simpleRedirect["Path"] = redirect.PathToken;
           simpleRedirect["Target"] = redirect.Target;
-          simpleRedirect["Enabled"] = enabled;
+          simpleRedirect["Enabled"] = GetRedirectStatus(redirect);
           simpleRedirect.Editing.EndEdit();
         }
         catch (Exception e)
         {
-          Warnings.Add("There has been an error creating the item for '" + redirect.Name + "': \n" + e.Message);
+          Warnings.Add("There has been an error processing the item for Simple Redirect '" + redirect.Name + "': \n" + e.Message);
         }
       }
     }
 
-    private void CreateShortUrlItem(RedirectCsvEntry redirect, Item rootItem)
+    private void ProcessShortUrlItem(RedirectCsvEntry redirect, Item rootItem, Item existingRedirect = null)
     {
       using (new Sitecore.SecurityModel.SecurityDisabler())
       {
-        string enabled = redirect.Status.ToLower() == "enabled" ? "1" : "0";
-
         try
         {
-          var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.ShortUrlItem.TemplateId)));
-          Item simpleRedirect = CreateFolderStructure(redirect, rootItem).Add(redirect.Name, template);
-          simpleRedirect.Editing.BeginEdit();
-          simpleRedirect["ShortUrl"] = redirect.PathToken;
-          simpleRedirect["Target"] = redirect.Target;
-          simpleRedirect["Enabled"] = enabled;
-          simpleRedirect["Short Url Settings"] = FindShortUrlSettings(redirect.ShortUrlPrefix);
-          simpleRedirect.Editing.EndEdit();
+          Item shortUrl;
+          var parentFolder = CreateFolderStructure(redirect, rootItem);
+
+          // if no redirect with the id is existing, create a new one
+          if (existingRedirect == null)
+          {
+            var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.ShortUrlItem.TemplateId)));
+            shortUrl = parentFolder.Add(redirect.Name, template);
+          }
+          // modify the existing one otherwise
+          else
+          {
+            shortUrl = existingRedirect;
+            shortUrl.MoveTo(parentFolder);
+          }
+
+          shortUrl.Editing.BeginEdit();
+          shortUrl["ShortUrl"] = redirect.PathToken;
+          shortUrl["Target"] = redirect.Target;
+          shortUrl["Enabled"] = GetRedirectStatus(redirect);
+          shortUrl["Short Url Settings"] = FindShortUrlSettings(redirect.ShortUrlPrefix);
+          shortUrl.Editing.EndEdit();
         }
         catch (Exception e)
         {
-          Warnings.Add("There has been an error creating the item for '" + redirect.Name + "': \n" + e.Message);
+          Warnings.Add("There has been an error processing the item for Short URL '" + redirect.Name + "':\n" + e.Message);
         }
       }
     }
 
-    private void UpdateRedirectItem(RedirectCsvEntry redirect, Item existingItem)
+    private static string GetRedirectStatus(RedirectCsvEntry redirect)
     {
-      throw new NotImplementedException();
+      return redirect.Status.ToUpper() == Constants.ImportStatus.ENABLED.ToString() ? "1" : "0";
     }
 
     private string FindShortUrlSettings(string prefix)
@@ -255,8 +266,9 @@ namespace Hi.UrlRewrite.Extensions.Services
     /// Create the folder structure based on the path.
     /// </summary>
     /// <param name="redirect">The imported redirect</param>
+    /// <param name="rootItem">The root item</param>
     /// <returns>The parent item for the redirect</returns>
-    private Item CreateFolderStructure(RedirectCsvEntry redirect, Item rootItem)
+    private static Item CreateFolderStructure(RedirectCsvEntry redirect, Item rootItem)
     {
       var currentFolder = rootItem;
 
@@ -280,7 +292,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     /// <param name="parent">The parent item for the new folder</param>
     /// <param name="name">The name of the new folder</param>
     /// <returns>The folder item</returns>
-    private Item CreateChildFolder(Item parent, string name)
+    private static Item CreateChildFolder(Item parent, string name)
     {
       var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Folders.RedirectSubFolderItem.TemplateId)));
 
