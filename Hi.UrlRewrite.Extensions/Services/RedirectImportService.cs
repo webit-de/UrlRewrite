@@ -6,49 +6,39 @@ using System.IO;
 using CsvHelper;
 using Hi.UrlRewrite.Entities.Rules;
 using Hi.UrlRewrite.Extensions.Models;
+using Sitecore.Data;
 using Sitecore.Data.Items;
-using Sitecore.Diagnostics;
+using Sitecore.StringExtensions;
 
 namespace Hi.UrlRewrite.Extensions.Services
 {
-  public static class RedirectImportService
+  public class RedirectImportService
   {
+    public List<string> Warnings = new List<string>();
+
     /// <summary>
     /// Generates a csv file for the selected items
     /// </summary>
     /// <param name="redirects">The redirect items to generate i csv file from</param>
-    public static void GenerateCsv(IEnumerable<InboundRule> redirects)
+    public void GenerateCsv(IEnumerable<InboundRule> redirects)
     {
 
     }
 
 
-    public static void GenerateRedirectsFromCsv(Stream csvStream)
+    public void GenerateRedirectsFromCsv(Stream csvStream)
     {
       try
       {
-        var warnings = new Dictionary<RedirectCsvEntry, string>();
         using (var reader = new StreamReader(csvStream))
         using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
         {
-          csv.Configuration.PrepareHeaderForMatch = (string header, int index) => header.ToLower();
+          csv.Configuration.PrepareHeaderForMatch = (string header, int index) => header.Trim().ToLower();
+
           foreach (var redirect in csv.GetRecords<RedirectCsvEntry>())
           {
-            if (redirect.Type == Constants.SimpleRedirectType)
-            {
-              GenerateSimpleRedirectItem(redirect);
-              continue;
-            }
-
-            if (redirect.Type == Constants.ShortUrlType)
-            {
-              GenerateShortUrlItem(redirect);
-              continue;
-            }
-
-            warnings.Add(redirect, "Invalid redirect type.");
+            ProcessRedirectItem(redirect);
           }
-          Sitecore.Diagnostics.Log.Debug("hallo");
         }
       }
       catch (Exception e)
@@ -57,11 +47,169 @@ namespace Hi.UrlRewrite.Extensions.Services
       }
     }
 
-    private static void GenerateSimpleRedirectItem(RedirectCsvEntry redirect)
+    private void ProcessRedirectItem(RedirectCsvEntry redirect)
+    {
+      if (!CheckValidity(redirect, out var existingItem))
+      {
+        return;
+      }
+
+      Enum.TryParse(redirect.Type, true, out Constants.RedirectType typeEnum);
+      switch (typeEnum)
+      {
+        case Constants.RedirectType.SIMPLEREDIRECT:
+          CreateSimpleRedirectItem(redirect);
+          return;
+        case Constants.RedirectType.SHORTURL:
+          CreateShortUrlItem(redirect);
+          return;
+        default:
+          Warnings.Add("Redirect " + redirect.Name + " has an invalid redirect type and can not be imported.");
+          return;
+      }
+    }
+
+    private void CreateSimpleRedirectItem(RedirectCsvEntry redirect)
+    {
+      using (new Sitecore.SecurityModel.SecurityDisabler())
+      {
+        try
+        {
+          var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
+          Item simpleRedirect = GetParentItem(redirect).Add(redirect.Name, template);
+
+          if (simpleRedirect == null)
+          {
+          }
+
+        }
+        catch (Exception e)
+        {
+          Warnings.Add("There has been an error creating the item for '" + redirect.Name + "'.");
+        }
+      }
+    }
+
+    private void CreateShortUrlItem(RedirectCsvEntry redirect)
     {
     }
-    private static void GenerateShortUrlItem(RedirectCsvEntry redirect)
+
+
+    private bool CheckValidity(RedirectCsvEntry redirect, out Item existingItem)
     {
+      bool result = true;
+
+      // check validity independent from existing items
+      if (!CheckEmptyFields(redirect))
+      {
+        result = false;
+      }
+
+      CheckValidId(redirect, out existingItem);
+
+      if (existingItem == null)
+      {
+        return result;
+      }
+
+      // check validity dependent from existing items
+      if (!CheckEqualType(redirect, existingItem))
+      {
+        result = false;
+      }
+
+      return result;
+    }
+
+    /// <summary>
+    /// Check if the redirect item has the same type as the imported one
+    /// </summary>
+    /// <param name="redirect">The imported redirect</param>
+    /// <param name="existingItem">The existing redirect item</param>
+    /// <returns>True if the imported redirect item has the same type as the existing item.</returns>
+    private bool CheckEqualType(RedirectCsvEntry redirect, Item existingItem)
+    {
+
+      Enum.TryParse(redirect.Type, true, out Constants.RedirectType typeEnum);
+
+      switch (typeEnum)
+      {
+        case Constants.RedirectType.SHORTURL:
+          if (existingItem.TemplateID.ToString() == Templates.Inbound.SimpleRedirectItem.TemplateId)
+          {
+            return true;
+          }
+          Warnings.Add("The imported redirect '" + redirect.Name + "' has a different type than the existing item and can not be imported.");
+          return false;
+
+        case Constants.RedirectType.SIMPLEREDIRECT:
+          if (existingItem.TemplateID.ToString() == Templates.Inbound.ShortUrlItem.TemplateId)
+          {
+            return true;
+          }
+          Warnings.Add("The imported redirect '" + redirect.Name + "' has a different type than the existing item and can not be imported.");
+          return false;
+
+        default:
+          Warnings.Add("Redirect '" + redirect.Name + "' has an invalid redirect type and can not be imported.");
+          return false;
+      }
+    }
+
+    /// <summary>
+    /// Check if a mandatory field is empty
+    /// </summary>
+    /// <param name="redirect">The imported redirect</param>
+    /// <returns>True if all mandatory fields have a </returns>
+    private bool CheckEmptyFields(RedirectCsvEntry redirect)
+    {
+      if (redirect.Type.IsNullOrEmpty() ||
+          redirect.Name.IsNullOrEmpty() ||
+          redirect.Path.IsNullOrEmpty() ||
+          redirect.PathToken.IsNullOrEmpty() ||
+          redirect.Type == Constants.RedirectType.SHORTURL.ToString() && redirect.ShortUrlPrefix.IsNullOrEmpty() ||
+          redirect.Status.IsNullOrEmpty() ||
+          redirect.Target.IsNullOrEmpty())
+      {
+        Warnings.Add("Redirect '" + redirect.Name + "' has at least one empty field and can not be imported.");
+        return false;
+      }
+      return true;
+    }
+
+    /// <summary>
+    /// Get the existing item with the same ID, if the id is valid and
+    /// </summary>
+    /// <param name="redirect">The imported redirect</param>
+    /// <param name="existingItem">The existing item</param>
+    /// <returns>True, if the id is valid or empty</returns>
+    private bool CheckValidId(RedirectCsvEntry redirect, out Item existingItem)
+    {
+      existingItem = null;
+
+      // check the id is valid
+      if (!Guid.TryParse(redirect.ItemId, out var redirectGuid))
+      {
+        if (redirect.ItemId != string.Empty)
+        {
+          Warnings.Add("Redirect '" + redirect.Name + "' has an invalid id and can not be imported.");
+          return false;
+        }
+        return true;
+      }
+
+      existingItem = Sitecore.Context.Database.GetItem(ID.Parse(redirectGuid));
+      return true;
+    }
+
+    /// <summary>
+    /// Gets the for the imported redirect based on the provided path
+    /// </summary>
+    /// <param name="redirect">The imported redirect</param>
+    /// <returns>The parent item</returns>
+    private Item GetParentItem(RedirectCsvEntry redirect)
+    {
+      throw new NotImplementedException();
     }
   }
 }

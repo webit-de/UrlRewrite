@@ -11,11 +11,17 @@ namespace Hi.UrlRewrite.Extensions
     public static readonly ID RedirectImportDialogueScript =
       ID.Parse(Guid.Parse("{B4D24E93-23D2-44C8-BFFF-8F01B6EE8FA3}"));
 
-    public static readonly string ShortUrlType = "SHORTURL";
-    public static readonly string SimpleRedirectType = "SIMPLEREDIRECT";
+    public enum RedirectType
+    {
+      SHORTURL,
+      SIMPLEREDIRECT
+    }
 
-    public static readonly string EnabledStatus = "ENABLED";
-    public static readonly string DisabledStatus = "DISABLED";
-    public static readonly string DeleteStatus = "DELETE";
+    public enum ImportStatus
+    {
+      ENABLED,
+      DISABLED,
+      DELETE
+    }
   }
 }
