@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using CsvHelper;
 using Hi.UrlRewrite.Entities.Rules;
 using Hi.UrlRewrite.Extensions.Models;
@@ -17,7 +18,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     public List<string> Warnings = new List<string>();
 
     /// <summary>
-    /// Generates a csv file for the selected items
+    /// Generate a csv file for the selected items
     /// </summary>
     /// <param name="redirects">The redirect items to generate i csv file from</param>
     public void GenerateCsv(IEnumerable<InboundRule> redirects)
@@ -131,7 +132,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         result = false;
       }
 
-      
+
 
       if (existingItem == null)
       {
@@ -229,13 +230,42 @@ namespace Hi.UrlRewrite.Extensions.Services
     }
 
     /// <summary>
-    /// Gets the for the imported redirect based on the provided path.
+    /// Create the folder structure based on the path.
     /// </summary>
     /// <param name="redirect">The imported redirect</param>
-    /// <returns>The parent item</returns>
+    /// <returns>The parent item for the redirect</returns>
     private Item CreateFolderStructure(RedirectCsvEntry redirect, Item rootItem)
     {
-      throw new NotImplementedException();
+      var currentFolder = rootItem;
+
+      string[] foldersInPath = redirect.Path.Split('/');
+
+      // go through every folder in the hierarchy and add missing ones
+      foreach (var folder in foldersInPath)
+      {
+        var nextFolder = currentFolder.Children.FirstOrDefault(x => x.Name == folder) ??
+                         CreateChildFolder(currentFolder, redirect.Name);
+
+        currentFolder = nextFolder;
+      }
+
+      return currentFolder;
+    }
+
+    /// <summary>
+    /// Create a redirect subfolder.
+    /// </summary>
+    /// <param name="parent">The parent item for the new folder</param>
+    /// <param name="name">The name of the new folder</param>
+    /// <returns>The folder item</returns>
+    private Item CreateChildFolder(Item parent, string name)
+    {
+      var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Folders.RedirectSubFolderItem.TemplateId)));
+
+      using (new Sitecore.SecurityModel.SecurityDisabler())
+      {
+        return parent.Add(name, template);
+      }
     }
   }
 }
