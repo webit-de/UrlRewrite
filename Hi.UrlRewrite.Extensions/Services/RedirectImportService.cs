@@ -16,6 +16,13 @@ namespace Hi.UrlRewrite.Extensions.Services
   {
     public List<string> Warnings = new List<string>();
 
+    private readonly Database _db;
+
+    public RedirectImportService(Database database)
+    {
+      _db = database;
+    }
+
     public void GenerateRedirectsFromCsv(Stream csvStream, Item rootItem)
     {
       try
@@ -80,7 +87,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           // if no redirect with the id is existing, create a new one
           if (existingRedirect == null)
           {
-            var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
+            var template = _db.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
             simpleRedirect = CreateFolderStructure(redirect, rootItem).Add(redirect.Name, template);
           }
           // modify the existing one otherwise
@@ -114,7 +121,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           // if no redirect with the id is existing, create a new one
           if (existingRedirect == null)
           {
-            var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.ShortUrlItem.TemplateId)));
+            var template = _db.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.ShortUrlItem.TemplateId)));
             shortUrl = parentFolder.Add(redirect.Name, template);
           }
           // modify the existing one otherwise
@@ -164,7 +171,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     private string FindShortUrlSettings(string prefix, Item rootItem)
     {
       var query = "/sitecore/content//*[@@templateid='" + Templates.Settings.ShortUrlSetting.TemplateId + "']";
-      var shortUrlSettings = Sitecore.Context.Database.SelectItems(query).FirstOrDefault(x => x["Prefix"] == prefix);
+      var shortUrlSettings = _db.SelectItems(query).FirstOrDefault(x => x["Prefix"] == prefix);
 
       if (shortUrlSettings == null)
       {
@@ -285,7 +292,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         return true;
       }
 
-      existingItem = Sitecore.Context.Database.GetItem(ID.Parse(redirectGuid));
+      existingItem = _db.GetItem(ID.Parse(redirectGuid));
       return true;
     }
 
@@ -295,7 +302,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     /// <param name="redirect">The imported redirect</param>
     /// <param name="rootItem">The root item</param>
     /// <returns>The parent item for the redirect</returns>
-    private static Item CreateFolderStructure(RedirectCsvEntry redirect, Item rootItem)
+    private Item CreateFolderStructure(RedirectCsvEntry redirect, Item rootItem)
     {
       var currentFolder = rootItem;
 
@@ -305,7 +312,7 @@ namespace Hi.UrlRewrite.Extensions.Services
       foreach (var folder in foldersInPath)
       {
         var nextFolder = currentFolder.Children.FirstOrDefault(x => x.Name == folder) ??
-                         CreateChildFolder(currentFolder, redirect.Name);
+                         CreateChildFolder(currentFolder, folder);
 
         currentFolder = nextFolder;
       }
@@ -319,9 +326,9 @@ namespace Hi.UrlRewrite.Extensions.Services
     /// <param name="parent">The parent item for the new folder</param>
     /// <param name="name">The name of the new folder</param>
     /// <returns>The folder item</returns>
-    private static Item CreateChildFolder(Item parent, string name)
+    private Item CreateChildFolder(Item parent, string name)
     {
-      var template = Sitecore.Context.Database.GetTemplate(ID.Parse(Guid.Parse(Templates.Folders.RedirectSubFolderItem.TemplateId)));
+      var template = _db.GetTemplate(ID.Parse(Guid.Parse(Templates.Folders.RedirectSubFolderItem.TemplateId)));
 
       using (new Sitecore.SecurityModel.SecurityDisabler())
       {

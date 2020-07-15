@@ -4,6 +4,7 @@ using System.Web.Mvc;
 using Hi.UrlRewrite.Extensions.Services;
 using Sitecore.Data;
 using Sitecore.Data.Items;
+using Sitecore.Diagnostics;
 using Sitecore.Mvc.Controllers;
 using Sitecore.Sites;
 
@@ -13,19 +14,21 @@ namespace Hi.UrlRewrite.Extensions.Controllers
   {
     public ActionResult ImportRedirects(string csvItemId, string rootFolderId)
     {
-      using (new SiteContextSwitcher(SiteContextFactory.GetSiteContext("master")))
-      {
-        var rootFolder = Sitecore.Context.Database.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
-        var csvItem = Sitecore.Context.Database.GetItem(ID.Parse(Guid.Parse(csvItemId)));
-        var csvMediaItem = new MediaItem(csvItem);
+      Assert.IsNotNullOrEmpty(csvItemId, "CSV item Id must not be empty");
+      Assert.IsNotNullOrEmpty(rootFolderId, "Root folder item Id must not be empty");
 
-        var stream = csvMediaItem.GetMediaStream();
+      var db = Sitecore.Configuration.Factory.GetDatabase("master");
+      var rootFolder = db.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
+      var csvItem = db.GetItem(ID.Parse(Guid.Parse(csvItemId)));
+      var csvMediaItem = new MediaItem(csvItem);
 
-        RedirectImportService importService = new RedirectImportService();
-        importService.GenerateRedirectsFromCsv(stream, rootFolder);
+      var stream = csvMediaItem.GetMediaStream();
 
-        throw new NotImplementedException();
-      }
+      // since this route is only mapped for CM instances, we can use the master database.
+      RedirectImportService importService = new RedirectImportService(db);
+      importService.GenerateRedirectsFromCsv(stream, rootFolder);
+
+      throw new NotImplementedException();
     }
   }
 }
