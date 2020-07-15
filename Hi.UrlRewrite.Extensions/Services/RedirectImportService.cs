@@ -96,10 +96,14 @@ namespace Hi.UrlRewrite.Extensions.Services
             simpleRedirect = existingRedirect;
             simpleRedirect.MoveTo(parentFolder);
           }
+
+          var path = GetPath(redirect);
+
           simpleRedirect.Editing.BeginEdit();
-          simpleRedirect["Path"] = GetPath(redirect);
+          simpleRedirect["Path"] = path;
           simpleRedirect["Target"] = GetRedirectTarget(redirect);
-          simpleRedirect["Enabled"] = GetRedirectStatus(redirect);
+          // if the path is empty, disable the redirect regardless of status field to avoid ambiguous paths.
+          simpleRedirect["Enabled"] = path == string.Empty ? "0" : GetRedirectStatus(redirect);
           simpleRedirect.Editing.EndEdit();
         }
         catch (Exception e)
@@ -131,10 +135,13 @@ namespace Hi.UrlRewrite.Extensions.Services
             shortUrl.MoveTo(parentFolder);
           }
 
+          var token = GetToken(redirect);
+
           shortUrl.Editing.BeginEdit();
-          shortUrl["Short Url"] = GetToken(redirect);
+          shortUrl["Short Url"] = token;
           shortUrl["Target"] = GetRedirectTarget(redirect);
-          shortUrl["Enabled"] = GetRedirectStatus(redirect);
+          // if the token is empty, disable the redirect regardless of status field to avoid ambiguous paths.
+          shortUrl["Enabled"] = token == string.Empty ? "0" : GetRedirectStatus(redirect);
           shortUrl["Short Url Settings"] = FindShortUrlSettings(redirect.ShortUrlPrefix, rootItem);
           shortUrl.Editing.EndEdit();
         }
@@ -156,16 +163,34 @@ namespace Hi.UrlRewrite.Extensions.Services
       return redirect.Target;
     }
 
-    private static string GetPath(RedirectCsvEntry redirect)
+    private string GetPath(RedirectCsvEntry redirect)
     {
-      // TODO: check uniqueness
-      return redirect.PathToken;
+      // do NOT use caching here!
+      var query = "/sitecore/content//*[@@templateid='" + Templates.Inbound.SimpleRedirectItem.TemplateId + "']";
+      var isPathUnique = _db.SelectItems(query).All(x => x["Path"] != redirect.PathToken);
+
+      if (isPathUnique)
+      {
+        return redirect.PathToken;
+      }
+
+      Warnings.Add("The path for the Simple Redirect '" + redirect.Name + "' is not unique and has been cleared. The redirect has been disabled.");
+      return string.Empty;
     }
 
-    private static string GetToken(RedirectCsvEntry redirect)
+    private string GetToken(RedirectCsvEntry redirect)
     {
-      //TODO: check uniqueness
-      return redirect.PathToken;
+      // do NOT use caching here!
+      var query = "/sitecore/content//*[@@templateid='" + Templates.Inbound.ShortUrlItem.TemplateId + "']";
+      var isTokenUnique = _db.SelectItems(query).All(x => x["Short Url"] != redirect.PathToken);
+
+      if (isTokenUnique)
+      {
+        return redirect.PathToken;
+      }
+
+      Warnings.Add("The token for the Short Url '" + redirect.Name + "' is not unique and has been cleared. The redirect has been disabled.");
+      return string.Empty;
     }
 
     private string FindShortUrlSettings(string prefix, Item rootItem)
