@@ -132,7 +132,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           }
 
           shortUrl.Editing.BeginEdit();
-          shortUrl["ShortUrl"] = GetToken(redirect);
+          shortUrl["Short Url"] = GetToken(redirect);
           shortUrl["Target"] = GetRedirectTarget(redirect);
           shortUrl["Enabled"] = GetRedirectStatus(redirect);
           shortUrl["Short Url Settings"] = FindShortUrlSettings(redirect.ShortUrlPrefix, rootItem);
@@ -306,7 +306,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     {
       var currentFolder = rootItem;
 
-      string[] foldersInPath = redirect.Path.Split('/');
+      var foldersInPath = redirect.Path.Split('/').Where(x => !x.IsNullOrEmpty()).ToArray();
 
       // go through every folder in the hierarchy and add missing ones
       foreach (var folder in foldersInPath)
