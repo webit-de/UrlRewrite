@@ -88,7 +88,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           if (existingRedirect == null)
           {
             var template = _db.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
-            simpleRedirect = CreateFolderStructure(redirect, rootItem).Add(redirect.Name, template);
+            simpleRedirect = parentFolder.Add(redirect.Name, template);
           }
           // modify the existing one otherwise
           else
