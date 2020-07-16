@@ -57,6 +57,7 @@ namespace Hi.UrlRewrite.Extensions.Services
       if (redirect.Status.ToUpper() == Constants.ImportStatus.DELETE.ToString())
       {
         DeleteRedirect(redirect);
+        return;
       }
 
       // update redirect or create a new one
