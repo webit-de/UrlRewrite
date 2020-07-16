@@ -56,8 +56,7 @@ namespace Hi.UrlRewrite.Extensions.Services
       // if DELETE status is set, delete the item
       if (redirect.Status.ToUpper() == Constants.ImportStatus.DELETE.ToString())
       {
-        rootItem?.Recycle();
-        return;
+        DeleteRedirect(redirect);
       }
 
       // update redirect or create a new one
@@ -73,6 +72,19 @@ namespace Hi.UrlRewrite.Extensions.Services
         default:
           Warnings.Add("Redirect '" + redirect.Name + "' has an invalid redirect type and can not be imported.");
           return;
+      }
+    }
+
+    /// <summary>
+    /// Delete the redirect item
+    /// </summary>
+    /// <param name="redirect">The data of the redirect item to delete</param>
+    private void DeleteRedirect(RedirectCsvEntry redirect)
+    {
+      var item = _db.GetItem(ID.Parse(Guid.Parse(redirect.ItemId)));
+      using (new Sitecore.SecurityModel.SecurityDisabler())
+      {
+        item?.Recycle();
       }
     }
 
