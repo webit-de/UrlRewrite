@@ -9,6 +9,7 @@ using Hi.UrlRewrite.Extensions.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 using Sitecore.StringExtensions;
+using Sitecore.Web;
 
 namespace Hi.UrlRewrite.Extensions.Services
 {
@@ -70,7 +71,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           ProcessShortUrlItem(redirect, rootItem, existingRedirect);
           return;
         default:
-          Warnings.Add("Redirect " + redirect.Name + " has an invalid redirect type and can not be imported.");
+          Warnings.Add("Redirect '" + redirect.Name + "' has an invalid redirect type and can not be imported.");
           return;
       }
     }
@@ -157,12 +158,32 @@ namespace Hi.UrlRewrite.Extensions.Services
       return redirect.Status.ToUpper() == Constants.ImportStatus.ENABLED.ToString() ? "1" : "0";
     }
 
-    private static string GetRedirectTarget(RedirectCsvEntry redirect)
+    /// <summary>
+    /// Get the target value. Triggers a warning if the link is internal and the target can't be found.
+    /// </summary>
+    /// <param name="redirect">The imported redirect</param>
+    /// <returns>The target field value</returns>
+    private string GetRedirectTarget(RedirectCsvEntry redirect)
     {
-      // TODO: warn if target does not exist
+      var startIndex = redirect.Target.IndexOf('{');
+      var id = redirect.Target.Substring(startIndex, 38);
+
+      // if no valid GUID is contained in the target string, assume an external link
+      if (!Guid.TryParse(id, out var guid))
+      {
+        return redirect.Target;
+      }
+
+      var targetItem = _db.GetItem(ID.Parse(guid));
+      if (targetItem != null)
+      {
+        return redirect.Target;
+      }
+
+      Warnings.Add("The target for the redirect '" + redirect.Name + "' does not exist. The Link will be broken.");
       return redirect.Target;
     }
-
+    
     private string GetPath(RedirectCsvEntry redirect)
     {
       // do NOT use caching here!
