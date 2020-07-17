@@ -84,12 +84,13 @@ namespace Hi.UrlRewrite.Extensions.Services
       };
     }
 
-    private string GetStatus(Item shortUrl)
+    private string GetStatus(Item redirect)
     {
-      throw new NotImplementedException();
+      var enabled = redirect["Enabled"] == "1";
+      return enabled ? Constants.ImportStatus.ENABLED.ToString() : Constants.ImportStatus.DISABLED.ToString();
     }
 
-    private string GetShortUrlPrefix(Item shortUrl)
+    private string GetShortUrlPrefix(Item redirect)
     {
       throw new NotImplementedException();
     }
