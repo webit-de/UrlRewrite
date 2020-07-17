@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Web.Mvc;
 using Hi.UrlRewrite.Extensions.Services;
 using Sitecore.Data;
@@ -19,6 +15,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       Assert.IsNotNullOrEmpty(csvItemId, "CSV item Id must not be empty");
       Assert.IsNotNullOrEmpty(rootFolderId, "Root folder item Id must not be empty");
 
+      // since this route is only mapped for CM instances, we can use the master database.
       var db = Sitecore.Configuration.Factory.GetDatabase("master");
       var rootFolder = db.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
 
@@ -32,59 +29,18 @@ namespace Hi.UrlRewrite.Extensions.Controllers
 
       var stream = csvMediaItem.GetMediaStream();
 
-      // since this route is only mapped for CM instances, we can use the master database.
       var importService = new RedirectImportService(db);
       importService.GenerateRedirectsFromCsv(stream, rootFolder);
 
-      var logFile = WriteLogFile(importService.Warnings, db, csvItem.Name);
+      var filePath = Constants.LogPath + "Import_" + csvItem.Name;
+      var logFile = MediaItemWriter.WriteFile(importService.Warnings, db, filePath, ".csv");
 
-      return Content(logFile);
+      return Content(logFile.ToString());
     }
 
     private static bool IsValidRootFolder(Item rootFolder)
     {
       return rootFolder != null && rootFolder.TemplateID.ToString() == Templates.Folders.RedirectFolderItem.TemplateId;
-    }
-
-    private string WriteLogFile(List<string> messages, Database db, string name)
-    {
-      // don't write epmty log files
-      if (!messages.Any())
-      {
-        return string.Empty;
-      }
-
-      //var logFolder = db.GetItem(Constants.LogPath);
-      //var fileTemplate = db.GetTemplate("/sitecore/templates/System/Media/Unversioned/File");
-      //logFolder.Add("Import_" + name + DateTime.Now, fileTemplate);
-
-      // Create the options
-      var options = new Sitecore.Resources.Media.MediaCreatorOptions
-      {
-        FileBased = true,
-        IncludeExtensionInItemName = false,
-        Versioned = false,
-        Destination = Constants.LogPath + "Import_" + name + "_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm"),
-        Database = db
-      };
-
-      // Create the file
-      var creator = new Sitecore.Resources.Media.MediaCreator();
-      MediaItem mediaItem = creator.CreateFromStream(GenerateLogStream(messages), ".log", options);
-
-      return mediaItem.ID.ToString();
-    }
-
-    private Stream GenerateLogStream(IEnumerable<string> logEntries)
-    {
-      var builder = new StringBuilder();
-
-      foreach (var entry in logEntries)
-      {
-        builder.AppendLine(entry);
-      }
-
-      return new MemoryStream(Encoding.UTF8.GetBytes(builder.ToString()));
     }
   }
 }
