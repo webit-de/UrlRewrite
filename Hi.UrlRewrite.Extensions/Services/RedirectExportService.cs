@@ -215,7 +215,7 @@ namespace Hi.UrlRewrite.Extensions.Services
 
     private string GetRelativePath(Item redirect)
     {
-      return redirect.Paths.FullPath.Remove(0, RedirectFolderPathLength);
+      return redirect.Paths.ParentPath.Remove(0, RedirectFolderPathLength);
     }
   }
 }
