@@ -77,22 +77,24 @@ namespace Hi.UrlRewrite.Extensions.Services
         Name = shortUrl.Name,
         Path = GetRelativePath(shortUrl),
         PathToken = shortUrl["Short Url"],
-        ShortUrlPrefix = GetShortUrlPrefix(shortUrl),
+        ShortUrlPrefix = string.Empty,
         Status = GetStatus(shortUrl),
         Target = shortUrl["Target"],
         Type = Constants.RedirectType.SHORTURL.ToString()
       };
     }
 
-    private string GetStatus(Item redirect)
+    private static string GetStatus(Item redirect)
     {
       var enabled = redirect["Enabled"] == "1";
       return enabled ? Constants.ImportStatus.ENABLED.ToString() : Constants.ImportStatus.DISABLED.ToString();
     }
 
-    private string GetShortUrlPrefix(Item redirect)
+    private string GetShortUrlPrefix(Item shortUrl)
     {
-      throw new NotImplementedException();
+      var settingsItem = _db.GetItem(shortUrl["Short Url Settings"]);
+
+      return settingsItem["Prefix"];
     }
 
     private string GetRelativePath(Item redirect)
