@@ -22,7 +22,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       var db = Sitecore.Configuration.Factory.GetDatabase("master");
       var rootFolder = db.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
 
-      if (rootFolder.TemplateID.ToString() != Templates.Folders.RedirectFolderItem.TemplateId)
+      if (!IsValidRootFolder(rootFolder))
       {
         return Content("Please select a Redirect Root folder for importing.");
       }
@@ -33,12 +33,17 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       var stream = csvMediaItem.GetMediaStream();
 
       // since this route is only mapped for CM instances, we can use the master database.
-      RedirectImportService importService = new RedirectImportService(db);
+      var importService = new RedirectImportService(db);
       importService.GenerateRedirectsFromCsv(stream, rootFolder);
 
       var logFile = WriteLogFile(importService.Warnings, db, csvItem.Name);
 
       return Content(logFile);
+    }
+
+    private static bool IsValidRootFolder(Item rootFolder)
+    {
+      return rootFolder != null && rootFolder.TemplateID.ToString() == Templates.Folders.RedirectFolderItem.TemplateId;
     }
 
     private string WriteLogFile(List<string> messages, Database db, string name)
@@ -54,15 +59,17 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       //logFolder.Add("Import_" + name + DateTime.Now, fileTemplate);
 
       // Create the options
-      Sitecore.Resources.Media.MediaCreatorOptions options = new Sitecore.Resources.Media.MediaCreatorOptions();
-      options.FileBased = true;
-      options.IncludeExtensionInItemName = false;
-      options.Versioned = false;
-      options.Destination = Constants.LogPath + "Import_" + name + "_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm");
-      options.Database = db;
+      var options = new Sitecore.Resources.Media.MediaCreatorOptions
+      {
+        FileBased = true,
+        IncludeExtensionInItemName = false,
+        Versioned = false,
+        Destination = Constants.LogPath + "Import_" + name + "_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm"),
+        Database = db
+      };
 
       // Create the file
-      Sitecore.Resources.Media.MediaCreator creator = new Sitecore.Resources.Media.MediaCreator();
+      var creator = new Sitecore.Resources.Media.MediaCreator();
       MediaItem mediaItem = creator.CreateFromStream(GenerateLogStream(messages), ".log", options);
 
       return mediaItem.ID.ToString();
