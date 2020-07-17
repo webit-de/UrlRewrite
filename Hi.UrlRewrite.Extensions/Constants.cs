@@ -12,6 +12,7 @@ namespace Hi.UrlRewrite.Extensions
       ID.Parse(Guid.Parse("{B4D24E93-23D2-44C8-BFFF-8F01B6EE8FA3}"));
 
     public static readonly string LogPath = "/sitecore/media library/Files/Url Rewrite/Redirect Imports/";
+    public static readonly string ExportPath = "/sitecore/media library/Files/Url Rewrite/Redirect Exports/";
 
     public enum RedirectType
     {

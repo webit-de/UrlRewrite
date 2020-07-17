@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using CsvHelper;
 using Hi.UrlRewrite.Extensions.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
@@ -14,17 +17,82 @@ namespace Hi.UrlRewrite.Extensions.Services
 
     private List<string> Warnings = new List<string>();
 
-    public RedirectExportService(Database database)
+    private int RedirectFolderPathLength
     {
-      _db = database;
+      get
+      {
+        // initialize folder path lazily
+        if (_redirectFolderPath == 0)
+        {
+          if (_rootItem.TemplateID.ToString() == Templates.Folders.RedirectFolderItem.TemplateId)
+          {
+            _redirectFolderPath = _rootItem.Paths.FullPath.Length;
+          }
+          else
+          {
+            var redirectFolder = _rootItem.Axes.GetAncestors()
+              .First(x => x.TemplateID.ToString() == Templates.Folders.RedirectFolderItem.TemplateId);
+            _redirectFolderPath = redirectFolder.Paths.FullPath.Length;
+          }
+        }
+
+        return _redirectFolderPath;
+      }
     }
 
-    public void ExportRedirects(Item rootItem, bool recursive)
+    private int _redirectFolderPath;
+
+    private readonly Item _rootItem;
+
+    private List<Item> _redirectsToExport = new List<Item>();
+
+    public RedirectExportService(Database database, Item rootItem)
+    {
+      _db = database;
+      _rootItem = rootItem;
+    }
+
+    public ID ExportRedirects(bool recursive)
     {
       var exportedRedirects = new HashSet<RedirectCsvEntry>();
-      foreach (var redirect in rootItem.Children.Where(IsExportableItem))
+
+      GetExportCandidates(recursive, _rootItem);
+      foreach (var redirect in _redirectsToExport)
       {
         exportedRedirects.Add(CreateRedirectEntry(redirect));
+      }
+
+      var csvStream = GenerateCsv(exportedRedirects);
+
+      return MediaItemWriter.WriteFile(csvStream, _db, Constants.ExportPath, ".csv");
+    }
+
+    private void GetExportCandidates(bool recursive, Item currentFolderItem)
+    {
+      foreach (var exportableItem in currentFolderItem.Children.Where(IsExportableItem))
+      {
+        _redirectsToExport.Add(exportableItem);
+      }
+
+      if (!recursive)
+      {
+        return;
+      }
+
+      foreach (var subfolder in currentFolderItem.Children.Where(x => x.TemplateID.ToString() == Templates.Folders.RedirectSubFolderItem.TemplateId))
+      {
+        GetExportCandidates(true, subfolder);
+      }
+    }
+
+    private static MemoryStream GenerateCsv(IEnumerable<RedirectCsvEntry> exportedRedirects)
+    {
+      var csvStream = new MemoryStream();
+      using (var writer = new StreamWriter(csvStream))
+      using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+      {
+        csv.WriteRecords(exportedRedirects);
+        return csvStream;
       }
     }
 
@@ -99,7 +167,7 @@ namespace Hi.UrlRewrite.Extensions.Services
 
     private string GetRelativePath(Item redirect)
     {
-      throw new NotImplementedException();
+      return redirect.Paths.FullPath.Remove(0, RedirectFolderPathLength);
     }
   }
 }

@@ -20,9 +20,9 @@ namespace Hi.UrlRewrite.Extensions.Controllers
         return Content("Please select a Redirectfolder or -subfolder for exporting.");
       }
 
-      var redirectExportService = new RedirectExportService(db);
+      var redirectExportService = new RedirectExportService(db, rootFolder);
       
-      redirectExportService.ExportRedirects(rootFolder, recursive);
+      redirectExportService.ExportRedirects(recursive);
 
       throw new NotImplementedException();
     }
