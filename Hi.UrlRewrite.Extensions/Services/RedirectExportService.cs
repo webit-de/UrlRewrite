@@ -63,9 +63,9 @@ namespace Hi.UrlRewrite.Extensions.Services
         exportedRedirects.Add(CreateRedirectEntry(redirect));
       }
 
-      var csvStream = GenerateCsv(exportedRedirects);
+      var csv = GenerateCsv(exportedRedirects);
 
-      return MediaItemWriter.WriteFile(csvStream, _db, Constants.ExportPath, ".csv");
+      return MediaItemWriter.WriteFile(new MemoryStream(csv), _db, Constants.ExportPath, ".csv");
     }
 
     private void GetExportCandidates(bool recursive, Item currentFolderItem)
@@ -88,14 +88,15 @@ namespace Hi.UrlRewrite.Extensions.Services
       }
     }
 
-    private static MemoryStream GenerateCsv(IEnumerable<RedirectCsvEntry> exportedRedirects)
+    private static byte[] GenerateCsv(IEnumerable<RedirectCsvEntry> exportedRedirects)
     {
       var csvStream = new MemoryStream();
       using (var writer = new StreamWriter(csvStream))
       using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
       {
         csv.WriteRecords(exportedRedirects);
-        return csvStream;
+        writer.Flush();
+        return csvStream.ToArray();
       }
     }
 
@@ -177,7 +178,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         Name = simpleRedirect.Name,
         Path = GetRelativePath(simpleRedirect),
         PathToken = simpleRedirect["Path"],
-        ShortUrlPrefix = GetShortUrlPrefix(simpleRedirect),
+        ShortUrlPrefix = string.Empty,
         Status = GetStatus(simpleRedirect),
         Target = simpleRedirect["Target"],
         Type = Constants.RedirectType.SIMPLEREDIRECT.ToString()
@@ -192,7 +193,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         Name = shortUrl.Name,
         Path = GetRelativePath(shortUrl),
         PathToken = shortUrl["Short Url"],
-        ShortUrlPrefix = string.Empty,
+        ShortUrlPrefix = GetShortUrlPrefix(shortUrl),
         Status = GetStatus(shortUrl),
         Target = shortUrl["Target"],
         Type = Constants.RedirectType.SHORTURL.ToString()
