@@ -1,4 +1,7 @@
-﻿using System.Web.Mvc;
+﻿using System;
+using System.Web.Mvc;
+using Hi.UrlRewrite.Extensions.Services;
+using Sitecore.Data;
 using Sitecore.Data.Items;
 using Sitecore.Mvc.Controllers;
 
@@ -6,60 +9,34 @@ namespace Hi.UrlRewrite.Extensions.Controllers
 {
   public class ExportRedirectsController : SitecoreController
   {
-    public ActionResult ExportRedirects(string rootFolderId = "")
+    public ActionResult ExportRedirects(string rootFolderId, bool recursive)
     {
-      return new EmptyResult();
+      // since this route is only mapped 
+      var db = Sitecore.Configuration.Factory.GetDatabase("master");
+      var rootFolder = db.GetItem(ID.Parse(Guid.Parse(rootFolderId)));
+
+      if (!IsValidRootFolder(rootFolder))
+      {
+        return Content("Please select a Redirectfolder or -subfolder for exporting.");
+      }
+
+      var redirectExportService = new RedirectExportService(db);
+      
+      redirectExportService.ExportRedirects(rootFolder, recursive);
+
+      throw new NotImplementedException();
     }
-    
-    ///// <summary>
-    ///// Starts the export redirects dialogue
-    ///// </summary>
-    ///// <param name="context">The command context</param>
-    //public override void Execute(CommandContext context)
-    //{
-    //  using (ScriptSession session = ScriptSessionManager.NewSession("Defailt", false))
-    //  {
-    //    var scriptitem = Sitecore.Context.Database.GetItem(Constants.RedirectExportDialogueScript);
-    //    var script = scriptitem["Script"];
-    //    if (script.IsNullOrEmpty())
-    //    {
-    //      return;
-    //    }
 
-    //    try
-    //    {
-    //      session.ExecuteScriptPart(script);
-    //    }
-    //    catch (Exception e)
-    //    {
-    //      Console.WriteLine("There has been an error executing the redirect export script: \n" + e.Message);
-    //      throw;
-    //    }
-    //  }
-    //}
+    private static bool IsValidRootFolder(Item rootFolder)
+    {
+      if (rootFolder == null)
+      {
+        return false;
+      }
 
-    ///// <summary>
-    ///// Check if the command is active
-    ///// </summary>
-    ///// <param name="context">The command context</param>
-    ///// <returns>CommandState.Enabled if the selected item is a redirect folder or redirect subfolder item. CommandState.Disabled otherwise.</returns>
-    //public override CommandState QueryState(CommandContext context)
-    //{
-    //  Assert.ArgumentNotNull((object)context, nameof(context));
-
-    //  if (context.Items.Length != 1 || context.Items[0] == null)
-    //  {
-    //    return CommandState.Disabled;
-    //  }
-
-    //  var itemTemplate = context.Items[0].TemplateID.ToString();
-    //  if (itemTemplate.Equals(Templates.Folders.RedirectFolderItem.TemplateId)
-    //  || itemTemplate.Equals(Templates.Folders.RedirectSubFolderItem.TemplateId))
-    //  {
-    //    return CommandState.Enabled;
-    //  }
-
-    //  return CommandState.Disabled;
-    //}
+      var templateIdString = rootFolder.TemplateID.ToString();
+      return templateIdString == Templates.Folders.RedirectFolderItem.TemplateId ||
+             templateIdString == Templates.Folders.RedirectSubFolderItem.TemplateId;
+    }
   }
 }
