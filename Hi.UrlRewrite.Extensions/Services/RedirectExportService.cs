@@ -8,6 +8,7 @@ using Hi.UrlRewrite.Extensions.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 using Sitecore.Diagnostics;
+using Sitecore.StringExtensions;
 
 namespace Hi.UrlRewrite.Extensions.Services
 {
@@ -69,7 +70,9 @@ namespace Hi.UrlRewrite.Extensions.Services
 
     private void GetExportCandidates(bool recursive, Item currentFolderItem)
     {
-      foreach (var exportableItem in currentFolderItem.Children.Where(IsExportableItem))
+      foreach (var exportableItem in currentFolderItem.Children
+        .Where(IsExportableItem)
+        .Where(HasValidData))
       {
         _redirectsToExport.Add(exportableItem);
       }
@@ -105,6 +108,50 @@ namespace Hi.UrlRewrite.Extensions.Services
              templateIdString == Templates.Inbound.ShortUrlItem.TemplateId;
     }
 
+    private bool HasValidData(Item redirect)
+    {
+      var templateIdString = redirect.TemplateID.ToString();
+      if (templateIdString == Templates.Inbound.SimpleRedirectItem.TemplateId)
+      {
+        return HasSimpleRedirectValidData(redirect);
+      }
+
+      if (templateIdString == Templates.Inbound.ShortUrlItem.TemplateId)
+      {
+        return HasShortUrlValidData(redirect);
+      }
+
+      Warnings.Add("The item '" + redirect.Name + "' has an invalid type and could not be exported.");
+      return false;
+    }
+
+    private bool HasShortUrlValidData(Item shortUrl)
+    {
+      var hasInvalidData = shortUrl["Target"].IsNullOrEmpty() ||
+                           shortUrl["Short Url"].IsNullOrEmpty() ||
+                           shortUrl["Short Url Settings"].IsNullOrEmpty();
+
+      if (hasInvalidData)
+      {
+        Warnings.Add("The Short URL '" + shortUrl.Name + "' has invalid data and was not exported.");
+      }
+
+      return !hasInvalidData;
+    }
+
+    private bool HasSimpleRedirectValidData(Item simpleRedirect)
+    {
+      var hasInvalidData = simpleRedirect["Target"].IsNullOrEmpty() ||
+                           simpleRedirect["Path"].IsNullOrEmpty();
+
+      if (hasInvalidData)
+      {
+        Warnings.Add("The Simple Redirect '" + simpleRedirect.Name + "' has invalid data and was not exported.");
+      }
+
+      return !hasInvalidData;
+    }
+
     private RedirectCsvEntry CreateRedirectEntry(Item redirect)
     {
       var templateIdString = redirect.TemplateID.ToString();
@@ -118,7 +165,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         return CreateShortUrlEntry(redirect);
       }
 
-      Warnings.Add("The item '" +redirect.Name+ "' has an invalid type and could not be exported.");
+      Warnings.Add("The item '" +redirect.Name+ "' has an invalid type and was not exported.");
       return null;
     }
 
