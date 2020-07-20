@@ -11,8 +11,19 @@ namespace Hi.UrlRewrite.Extensions.Services
 {
   public static class MediaItemWriter
   {
+    public static string GetFileName(Item rootItem, string nameAddition = "")
+    {
+      var siteInfo = Sitecore.Links.LinkManager.ResolveTargetSite(rootItem);
+      var result = DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + "_" + siteInfo.Name + "_" + rootItem.Name;
+      if (nameAddition == string.Empty)
+      {
+        return result;
+      }
 
-    public static ID WriteFile(List<string> messages, Database db, string filePath, string fileExtension)
+      return result + "_" + nameAddition;
+    }
+
+    public static ID WriteFile(List<string> messages, Database db, string filePath, string fileName, string fileExtension)
     {
       // don't write empty files
       if (!messages.Any())
@@ -22,10 +33,10 @@ namespace Hi.UrlRewrite.Extensions.Services
 
       var fileStream = GenerateStreamFromStringCollection(messages);
 
-      return WriteFile(fileStream, db, filePath, fileExtension);
+      return WriteFile(fileStream, db, filePath, fileName, fileExtension);
     }
 
-    public static ID WriteFile(Stream fileStream, Database db, string filePath, string fileExtension)
+    public static ID WriteFile(Stream fileStream, Database db, string filePath, string fileName, string fileExtension)
     {
       // Create the options
       var options = new Sitecore.Resources.Media.MediaCreatorOptions
@@ -33,7 +44,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         FileBased = true,
         IncludeExtensionInItemName = false,
         Versioned = false,
-        Destination = filePath + "_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm"),
+        Destination = filePath + fileName,
         Database = db
       };
 

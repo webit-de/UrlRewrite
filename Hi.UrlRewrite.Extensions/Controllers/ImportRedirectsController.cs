@@ -32,8 +32,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       var importService = new RedirectImportService(db);
       importService.GenerateRedirectsFromCsv(stream, rootFolder);
 
-      var filePath = Constants.LogPath + "Import_" + csvItem.Name;
-      var logFile = MediaItemWriter.WriteFile(importService.Warnings, db, filePath, ".csv");
+      var logFile = MediaItemWriter.WriteFile(importService.Warnings, db, Constants.LogPath, MediaItemWriter.GetFileName(rootFolder, "Import"), ".log");
 
       return Content(logFile.ToString());
     }

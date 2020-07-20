@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Web.Mvc;
 using Hi.UrlRewrite.Extensions.Services;
 using Sitecore.Data;
@@ -21,10 +22,12 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       }
 
       var redirectExportService = new RedirectExportService(db, rootFolder);
-      
-      redirectExportService.ExportRedirects(recursive);
 
-      throw new NotImplementedException();
+      var csv = redirectExportService.ExportRedirects(recursive);
+
+      MediaItemWriter.WriteFile(new MemoryStream(csv), db, Constants.ExportPath, MediaItemWriter.GetFileName(rootFolder), ".csv");
+
+      return Content(csv.ToString(), "text/csv");
     }
 
     private static bool IsValidRootFolder(Item rootFolder)

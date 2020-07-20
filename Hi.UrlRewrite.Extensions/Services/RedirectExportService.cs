@@ -53,7 +53,7 @@ namespace Hi.UrlRewrite.Extensions.Services
       _rootItem = rootItem;
     }
 
-    public ID ExportRedirects(bool recursive)
+    public byte[] ExportRedirects(bool recursive)
     {
       var exportedRedirects = new HashSet<RedirectCsvEntry>();
 
@@ -63,9 +63,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         exportedRedirects.Add(CreateRedirectEntry(redirect));
       }
 
-      var csv = GenerateCsv(exportedRedirects);
-
-      return MediaItemWriter.WriteFile(new MemoryStream(csv), _db, Constants.ExportPath, ".csv");
+      return GenerateCsv(exportedRedirects);
     }
 
     private void GetExportCandidates(bool recursive, Item currentFolderItem)
