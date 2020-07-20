@@ -9,7 +9,7 @@ using Sitecore.Data.Items;
 
 namespace Hi.UrlRewrite.Extensions.Services
 {
-  public static class MediaItemWriter
+  public static class FileWriter
   {
     public static string GetFileName(Item rootItem, string nameAddition = "")
     {
