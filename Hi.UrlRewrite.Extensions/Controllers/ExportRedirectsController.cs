@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Web.Mvc;
 using Hi.UrlRewrite.Extensions.Services;
 using Sitecore.Data;
@@ -10,7 +11,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
 {
   public class ExportRedirectsController : SitecoreController
   {
-    public ActionResult ExportRedirects(string rootFolderId, bool recursive)
+    public ActionResult ExportRedirects(string rootFolderId, bool recursive = true, bool returnCsv = true)
     {
       // since this route is only mapped 
       var db = Sitecore.Configuration.Factory.GetDatabase("master");
@@ -21,13 +22,18 @@ namespace Hi.UrlRewrite.Extensions.Controllers
         return Content("Please select a Redirectfolder or -subfolder for exporting.");
       }
 
-      var redirectExportService = new RedirectExportService(db, rootFolder);
+      var exportService = new RedirectExportService(db, rootFolder);
 
-      var csv = redirectExportService.ExportRedirects(recursive);
+      var csv = exportService.ExportRedirects(recursive);
 
-      MediaItemWriter.WriteFile(new MemoryStream(csv), db, Constants.ExportPath, MediaItemWriter.GetFileName(rootFolder), ".csv");
+      if (exportService.Warnings.Any())
+      {
+        var logFile = MediaItemWriter.WriteFile(exportService.Warnings, db, Constants.LogPath, MediaItemWriter.GetFileName(rootFolder, "Export"), ".log");
+      }
 
-      return Content(csv.ToString(), "text/csv");
+      var fileId = MediaItemWriter.WriteFile(new MemoryStream(csv), db, Constants.ExportPath, MediaItemWriter.GetFileName(rootFolder), ".csv");
+
+      return returnCsv ? Content(csv.ToString(), "text/csv") : Content(fileId.ToString());
     }
 
     private static bool IsValidRootFolder(Item rootFolder)
