@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using CsvHelper;
 using Hi.UrlRewrite.Extensions.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
@@ -16,7 +14,7 @@ namespace Hi.UrlRewrite.Extensions.Services
   {
     private readonly Database _db;
 
-    private List<string> Warnings = new List<string>();
+    private readonly List<ImportExportLogEntry> Warnings = new List<ImportExportLogEntry>();
 
     private int RedirectFolderPathLength
     {
@@ -63,7 +61,12 @@ namespace Hi.UrlRewrite.Extensions.Services
         exportedRedirects.Add(CreateRedirectEntry(redirect));
       }
 
-      return GenerateCsv(exportedRedirects);
+      if (Warnings.Any())
+      {
+        var warningsStream = new MemoryStream(CsvService.GenerateCsv(Warnings));
+        FileWriter.WriteFile(warningsStream, _db, Constants.LogPath, FileWriter.GetFileName(_rootItem, "Export"), ".csv");
+      }
+      return CsvService.GenerateCsv(exportedRedirects);
     }
 
     private void GetExportCandidates(bool recursive, Item currentFolderItem)
@@ -83,18 +86,6 @@ namespace Hi.UrlRewrite.Extensions.Services
       foreach (var subfolder in currentFolderItem.Children.Where(x => x.TemplateID.ToString() == Templates.Folders.RedirectSubFolderItem.TemplateId))
       {
         GetExportCandidates(true, subfolder);
-      }
-    }
-
-    private static byte[] GenerateCsv(IEnumerable<RedirectCsvEntry> exportedRedirects)
-    {
-      var csvStream = new MemoryStream();
-      using (var writer = new StreamWriter(csvStream))
-      using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-      {
-        csv.WriteRecords(exportedRedirects);
-        writer.Flush();
-        return csvStream.ToArray();
       }
     }
 
@@ -120,7 +111,14 @@ namespace Hi.UrlRewrite.Extensions.Services
         return HasShortUrlValidData(redirect);
       }
 
-      Warnings.Add("The item '" + redirect.Name + "' has an invalid type and could not be exported.");
+      Warnings.Add(new ImportExportLogEntry()
+      {
+        ItemName = redirect.Name,
+        ItemId = redirect.ID.ToString(),
+        Created = false,
+        Message = "The item has an invalid type and could not be exported."
+      });
+
       return false;
     }
 
@@ -132,7 +130,13 @@ namespace Hi.UrlRewrite.Extensions.Services
 
       if (hasInvalidData)
       {
-        Warnings.Add("The Short URL '" + shortUrl.Name + "' has invalid data and was not exported.");
+        Warnings.Add(new ImportExportLogEntry()
+        {
+          ItemName = shortUrl.Name,
+          ItemId = shortUrl.ID.ToString(),
+          Created = false,
+          Message = "The Short URL has invalid data and was not exported."
+        });
       }
 
       return !hasInvalidData;
@@ -145,7 +149,13 @@ namespace Hi.UrlRewrite.Extensions.Services
 
       if (hasInvalidData)
       {
-        Warnings.Add("The Simple Redirect '" + simpleRedirect.Name + "' has invalid data and was not exported.");
+        Warnings.Add(new ImportExportLogEntry()
+        {
+          ItemName = simpleRedirect.Name,
+          ItemId = simpleRedirect.ID.ToString(),
+          Created = false,
+          Message = "The Simple Redirect has invalid data and was not exported."
+        });
       }
 
       return !hasInvalidData;
@@ -164,7 +174,14 @@ namespace Hi.UrlRewrite.Extensions.Services
         return CreateShortUrlEntry(redirect);
       }
 
-      Warnings.Add("The item '" +redirect.Name+ "' has an invalid type and was not exported.");
+      Warnings.Add(new ImportExportLogEntry()
+      {
+        ItemName = redirect.Name,
+        ItemId = redirect.ID.ToString(),
+        Created = false,
+        Message = "The item has an invalid type and was not exported."
+      });
+
       return null;
     }
 
@@ -182,7 +199,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         Type = Constants.RedirectType.SIMPLEREDIRECT.ToString()
       };
     }
-    
+
     private RedirectCsvEntry CreateShortUrlEntry(Item shortUrl)
     {
       return new RedirectCsvEntry()

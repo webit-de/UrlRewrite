@@ -25,13 +25,8 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       var exportService = new RedirectExportService(db, rootFolder);
 
       var csv = exportService.ExportRedirects(recursive);
-
-      if (exportService.Warnings.Any())
-      {
-        var logFile = MediaItemWriter.WriteFile(exportService.Warnings, db, Constants.LogPath, MediaItemWriter.GetFileName(rootFolder, "Export"), ".log");
-      }
-
-      var fileId = MediaItemWriter.WriteFile(new MemoryStream(csv), db, Constants.ExportPath, MediaItemWriter.GetFileName(rootFolder), ".csv");
+      
+      var fileId = FileWriter.WriteFile(new MemoryStream(csv), db, Constants.ExportPath, FileWriter.GetFileName(rootFolder), ".csv");
 
       return returnCsv ? Content(csv.ToString(), "text/csv") : Content(fileId.ToString());
     }

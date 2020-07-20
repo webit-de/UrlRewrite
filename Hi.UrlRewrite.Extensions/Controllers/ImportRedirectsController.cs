@@ -30,10 +30,8 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       var stream = csvMediaItem.GetMediaStream();
 
       var importService = new RedirectImportService(db);
-      importService.GenerateRedirectsFromCsv(stream, rootFolder);
-
-      var logFile = MediaItemWriter.WriteFile(importService.Warnings, db, Constants.LogPath, MediaItemWriter.GetFileName(rootFolder, "Import"), ".log");
-
+      var logFile = importService.GenerateRedirectsFromCsv(stream, rootFolder);
+      
       return Content(logFile.ToString());
     }
 

@@ -1,9 +1,11 @@
 ﻿
+using System;
 using CsvHelper.Configuration.Attributes;
+using Sitecore.Data;
 
 namespace Hi.UrlRewrite.Extensions.Models
 {
-  public class RedirectCsvEntry
+  public class RedirectCsvEntry : ICsvModel
   {
     [Name("Path/Token")]
     public string PathToken { get; set; }
