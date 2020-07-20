@@ -30,9 +30,9 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       var stream = csvMediaItem.GetMediaStream();
 
       var importService = new RedirectImportService(db);
-      var logFile = importService.GenerateRedirectsFromCsv(stream, rootFolder);
+      var warningLog = importService.GenerateRedirectsFromCsv(stream, rootFolder);
       
-      return Content(logFile.ToString());
+      return Content(warningLog);
     }
 
     private static bool IsValidRootFolder(Item rootFolder)

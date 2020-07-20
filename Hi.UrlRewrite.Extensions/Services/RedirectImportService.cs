@@ -15,7 +15,7 @@ namespace Hi.UrlRewrite.Extensions.Services
 {
   public class RedirectImportService
   {
-    public readonly List<ImportExportLogEntry> Warnings = new List<ImportExportLogEntry>();
+    private readonly List<ImportExportLogEntry> Warnings = new List<ImportExportLogEntry>();
 
     private readonly Database _db;
 
@@ -24,7 +24,7 @@ namespace Hi.UrlRewrite.Extensions.Services
       _db = database;
     }
 
-    public ID GenerateRedirectsFromCsv(Stream csvStream, Item rootItem)
+    public string GenerateRedirectsFromCsv(Stream csvStream, Item rootItem)
     {
       try
       {
@@ -40,11 +40,13 @@ namespace Hi.UrlRewrite.Extensions.Services
 
           if (Warnings.Any())
           {
-            var warningsStream = new MemoryStream(CsvService.GenerateCsv(Warnings));
-            return FileWriter.WriteFile(warningsStream, _db, Constants.LogPath, FileWriter.GetFileName(rootItem, "Import"), ".csv");
+            var csvResult = CsvService.GenerateCsv(Warnings);
+            FileWriter.WriteFile(new MemoryStream(csvResult), _db, Constants.LogPath, FileWriter.GetFileName(rootItem, "Import"), ".csv");
+
+            return System.Text.Encoding.UTF8.GetString(csvResult);
           }
 
-          return ID.Null;
+          return string.Empty;
         }
       }
       catch (Exception e)
