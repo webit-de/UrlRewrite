@@ -86,7 +86,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         default:
           Warnings.Add(new ImportExportLogEntry()
           {
-            ItemName = redirect.Name,
+            ItemName = redirect.ItemName,
             ItemId = redirect.ItemId,
             Message = "Redirect has an invalid redirect type and can not be imported.",
             Created = false
@@ -121,7 +121,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           if (existingRedirect == null)
           {
             var template = _db.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
-            simpleRedirect = parentFolder.Add(redirect.Name, template);
+            simpleRedirect = parentFolder.Add(redirect.ItemName, template);
           }
           // modify the existing one otherwise
           else
@@ -143,7 +143,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         {
           Warnings.Add(new ImportExportLogEntry()
           {
-            ItemName = redirect.Name,
+            ItemName = redirect.ItemName,
             ItemId = redirect.ItemId,
             Message = "There has been an error processing the Simple Redirect:\n" + e.Message,
             Created = false
@@ -165,7 +165,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           if (existingRedirect == null)
           {
             var template = _db.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.ShortUrlItem.TemplateId)));
-            shortUrl = parentFolder.Add(redirect.Name, template);
+            shortUrl = parentFolder.Add(redirect.ItemName, template);
           }
           // modify the existing one otherwise
           else
@@ -188,7 +188,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         {
           Warnings.Add(new ImportExportLogEntry()
           {
-            ItemName = redirect.Name,
+            ItemName = redirect.ItemName,
             ItemId = redirect.ItemId,
             Message = "There has been an error processing the Short URL:\n" + e.Message,
             Created = false
@@ -226,7 +226,7 @@ namespace Hi.UrlRewrite.Extensions.Services
 
       Warnings.Add(new ImportExportLogEntry()
       {
-        ItemName = redirect.Name,
+        ItemName = redirect.ItemName,
         ItemId = redirect.ItemId,
         Message = "The target for the redirect does not exist. The Link will be broken.",
         Created = true
@@ -239,16 +239,16 @@ namespace Hi.UrlRewrite.Extensions.Services
     {
       // do NOT use caching here!
       var query = "/sitecore/content//*[@@templateid='" + Templates.Inbound.SimpleRedirectItem.TemplateId + "']";
-      var isPathUnique = _db.SelectItems(query).All(x => x["Path"] != redirect.PathToken);
+      var isPathUnique = _db.SelectItems(query).All(x => x["Path"] != redirect.RedirectedUrl);
 
       if (isPathUnique)
       {
-        return redirect.PathToken;
+        return redirect.RedirectedUrl;
       }
 
       Warnings.Add(new ImportExportLogEntry()
       {
-        ItemName = redirect.Name,
+        ItemName = redirect.ItemName,
         ItemId = redirect.ItemId,
         Message = "The path for the Simple Redirect is not unique and has been cleared. The redirect has been disabled.",
         Created = true
@@ -261,16 +261,16 @@ namespace Hi.UrlRewrite.Extensions.Services
     {
       // do NOT use caching here!
       var query = "/sitecore/content//*[@@templateid='" + Templates.Inbound.ShortUrlItem.TemplateId + "']";
-      var isTokenUnique = _db.SelectItems(query).All(x => x["Short Url"] != redirect.PathToken);
+      var isTokenUnique = _db.SelectItems(query).All(x => x["Short Url"] != redirect.RedirectedUrl);
 
       if (isTokenUnique)
       {
-        return redirect.PathToken;
+        return redirect.RedirectedUrl;
       }
 
       Warnings.Add(new ImportExportLogEntry()
       {
-        ItemName = redirect.Name,
+        ItemName = redirect.ItemName,
         ItemId = redirect.ItemId,
         Message = "The token for the Short Url is not unique and has been cleared. The redirect has been disabled.",
         Created = true
@@ -288,7 +288,7 @@ namespace Hi.UrlRewrite.Extensions.Services
       {
         Warnings.Add(new ImportExportLogEntry()
         {
-          ItemName = redirect.Name,
+          ItemName = redirect.ItemName,
           ItemId = redirect.ItemId,
           Message = "Could not find matching Short URL Setting. The field has been left empty.",
           Created = true
@@ -347,7 +347,7 @@ namespace Hi.UrlRewrite.Extensions.Services
 
           Warnings.Add(new ImportExportLogEntry()
           {
-            ItemName = redirect.Name,
+            ItemName = redirect.ItemName,
             ItemId = redirect.ItemId,
             Message = "The imported redirect has a different type than the existing item and can not be imported.",
             Created = false
@@ -362,7 +362,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           }
           Warnings.Add(new ImportExportLogEntry()
           {
-            ItemName = redirect.Name,
+            ItemName = redirect.ItemName,
             ItemId = redirect.ItemId,
             Message = "The imported redirect has a different type than the existing item and can not be imported.",
             Created = false
@@ -373,7 +373,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         default:
           Warnings.Add(new ImportExportLogEntry()
           {
-            ItemName = redirect.Name,
+            ItemName = redirect.ItemName,
             ItemId = redirect.ItemId,
             Message = "The redirect has an invalid redirect type and can not be imported.",
             Created = false
@@ -397,16 +397,16 @@ namespace Hi.UrlRewrite.Extensions.Services
       }
 
       if (redirect.Type.IsNullOrEmpty() ||
-          redirect.Name.IsNullOrEmpty() ||
-          redirect.Path.IsNullOrEmpty() ||
-          redirect.PathToken.IsNullOrEmpty() ||
+          redirect.ItemName.IsNullOrEmpty() ||
+          redirect.RelativeItemPath.IsNullOrEmpty() ||
+          redirect.RedirectedUrl.IsNullOrEmpty() ||
           redirect.Type == Constants.RedirectType.SHORTURL.ToString() && redirect.ShortUrlPrefix.IsNullOrEmpty() ||
           redirect.Status.IsNullOrEmpty() ||
           redirect.Target.IsNullOrEmpty())
       {
         Warnings.Add(new ImportExportLogEntry()
         {
-          ItemName = redirect.Name,
+          ItemName = redirect.ItemName,
           ItemId = redirect.ItemId,
           Message = "The redirect has at least one empty field and can not be imported.",
           Created = false
@@ -435,7 +435,7 @@ namespace Hi.UrlRewrite.Extensions.Services
         {
           Warnings.Add(new ImportExportLogEntry()
           {
-            ItemName = redirect.Name,
+            ItemName = redirect.ItemName,
             ItemId = redirect.ItemId,
             Message = "The redirect has an invalid id and can not be imported.",
             Created = false
@@ -460,7 +460,7 @@ namespace Hi.UrlRewrite.Extensions.Services
     {
       var currentFolder = rootItem;
 
-      var foldersInPath = redirect.Path.Split('/').Where(x => !x.IsNullOrEmpty()).ToArray();
+      var foldersInPath = redirect.RelativeItemPath.Split('/').Where(x => !x.IsNullOrEmpty()).ToArray();
 
       // go through every folder in the hierarchy and add missing ones
       foreach (var folder in foldersInPath)

@@ -198,9 +198,9 @@ namespace Hi.UrlRewrite.Extensions.Services
       return new RedirectCsvEntry()
       {
         ItemId = simpleRedirect.ID.ToString(),
-        Name = simpleRedirect.Name,
-        Path = GetRelativePath(simpleRedirect),
-        PathToken = simpleRedirect["Path"],
+        ItemName = simpleRedirect.Name,
+        RelativeItemPath = GetRelativePath(simpleRedirect),
+        RedirectedUrl = simpleRedirect["Path"],
         ShortUrlPrefix = string.Empty,
         Status = GetStatus(simpleRedirect),
         Target = simpleRedirect["Target"],
@@ -213,9 +213,9 @@ namespace Hi.UrlRewrite.Extensions.Services
       return new RedirectCsvEntry()
       {
         ItemId = shortUrl.ID.ToString(),
-        Name = shortUrl.Name,
-        Path = GetRelativePath(shortUrl),
-        PathToken = shortUrl["Short Url"],
+        ItemName = shortUrl.Name,
+        RelativeItemPath = GetRelativePath(shortUrl),
+        RedirectedUrl = shortUrl["Short Url"],
         ShortUrlPrefix = GetShortUrlPrefix(shortUrl),
         Status = GetStatus(shortUrl),
         Target = shortUrl["Target"],
