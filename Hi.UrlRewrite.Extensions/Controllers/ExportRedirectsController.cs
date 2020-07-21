@@ -9,6 +9,7 @@ using Sitecore.Mvc.Controllers;
 
 namespace Hi.UrlRewrite.Extensions.Controllers
 {
+  [Authorize]
   public class ExportRedirectsController : SitecoreController
   {
     public ActionResult ExportRedirects(string rootFolderId, bool recursive = true, bool isApiCall = true)
