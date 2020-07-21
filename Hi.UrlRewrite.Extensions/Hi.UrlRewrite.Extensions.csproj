@@ -138,11 +138,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
+    <Compile Include="Models\ICsvModel.cs" />
+    <Compile Include="Models\ImportExportLogEntry.cs" />
     <Compile Include="Models\RedirectCsvEntry.cs" />
     <Compile Include="Pipelines\RegisterCustomRoutes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controllers\ExportRedirectsController.cs" />
     <Compile Include="Controllers\ImportRedirectsController.cs" />
+    <Compile Include="Services\CsvService.cs" />
+    <Compile Include="Services\FileWriter.cs" />
+    <Compile Include="Services\RedirectExportService.cs" />
     <Compile Include="Services\RedirectImportService.cs" />
   </ItemGroup>
   <ItemGroup />
