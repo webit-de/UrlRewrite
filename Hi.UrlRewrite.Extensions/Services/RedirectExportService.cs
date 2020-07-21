@@ -51,22 +51,30 @@ namespace Hi.UrlRewrite.Extensions.Services
       _rootItem = rootItem;
     }
 
-    public byte[] ExportRedirects(bool recursive)
+    public byte[] ExportRedirects(bool recursive, out ID logId)
     {
       var exportedRedirects = new HashSet<RedirectCsvEntry>();
 
       GetExportCandidates(recursive, _rootItem);
+
       foreach (var redirect in _redirectsToExport)
       {
         exportedRedirects.Add(CreateRedirectEntry(redirect));
       }
 
+      logId = WriteLog();
+
+      return CsvService.GenerateCsv(exportedRedirects);
+    }
+
+    private ID WriteLog()
+    {
       if (Warnings.Any())
       {
         var warningsStream = new MemoryStream(CsvService.GenerateCsv(Warnings));
-        FileWriter.WriteFile(warningsStream, _db, Constants.LogPath, FileWriter.GetFileName(_rootItem, "Export"), ".csv");
+        return FileWriter.WriteFile(warningsStream, _db, Constants.LogPath, FileWriter.GetFileName(_rootItem, "Export"), ".csv");
       }
-      return CsvService.GenerateCsv(exportedRedirects);
+      return ID.Null;
     }
 
     private void GetExportCandidates(bool recursive, Item currentFolderItem)

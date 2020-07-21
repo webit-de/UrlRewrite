@@ -11,7 +11,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
 {
   public class ExportRedirectsController : SitecoreController
   {
-    public ActionResult ExportRedirects(string rootFolderId, bool recursive = true, bool returnCsv = true)
+    public ActionResult ExportRedirects(string rootFolderId, bool recursive = true, bool isApiCall = true)
     {
       // since this route is only mapped 
       var db = Sitecore.Configuration.Factory.GetDatabase("master");
@@ -24,11 +24,18 @@ namespace Hi.UrlRewrite.Extensions.Controllers
 
       var exportService = new RedirectExportService(db, rootFolder);
 
-      var csv = exportService.ExportRedirects(recursive);
+      var csv = exportService.ExportRedirects(recursive, out var logId);
       
       var fileId = FileWriter.WriteFile(new MemoryStream(csv), db, Constants.ExportPath, FileWriter.GetFileName(rootFolder), ".csv");
 
-      return returnCsv ? Content(csv.ToString(), "text/csv") : Content(fileId.ToString());
+      // in an api call, return the csv file
+      if (isApiCall)
+      {
+        return Content(csv.ToString(), "text/csv");
+      }
+      // return ids of generated csv and log files otherwise
+      var idResult = "{\"resultId\":\"" + fileId + "\",\"logId\":\"" + logId + "\"} ";
+      return Content(idResult, "text/json");
     }
 
     private static bool IsValidRootFolder(Item rootFolder)
