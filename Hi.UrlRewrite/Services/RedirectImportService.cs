@@ -233,9 +233,14 @@ namespace Hi.UrlRewrite.Services
       var startIndex = redirect.RedirectTarget.IndexOf('{');
       var id = redirect.RedirectTarget.Substring(startIndex, 38);
 
-      // if no valid GUID is contained in the target string, assume an external link
+      if (HasExternalLink(redirect))
+      {
+        return redirect.RedirectTarget;
+      }
+
       if (!Guid.TryParse(id, out var guid))
       {
+        _reportService.AddWarning("The target for the redirect is invalid. The Link will be broken.", redirect, true);
         return redirect.RedirectTarget;
       }
 
@@ -247,6 +252,16 @@ namespace Hi.UrlRewrite.Services
 
       _reportService.AddWarning("The target for the redirect does not exist. The Link will be broken.", redirect, true);
       return redirect.RedirectTarget;
+    }
+
+    /// <summary>
+    /// Check if the redirect target is an external link
+    /// </summary>
+    /// <param name="redirect">The redirect item</param>
+    /// <returns>True if the redirect target is external</returns>
+    private bool HasExternalLink(RedirectCsvEntry redirect)
+    {
+      return redirect.RedirectTarget.Contains("linktype=\"external\"");
     }
 
     /// <summary>
