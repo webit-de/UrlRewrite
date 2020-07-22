@@ -4,7 +4,7 @@ using System.IO;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 
-namespace Hi.UrlRewrite.Extensions.Services
+namespace Hi.UrlRewrite.Services
 {
   public static class FileService
   {

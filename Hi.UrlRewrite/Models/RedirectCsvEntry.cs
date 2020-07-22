@@ -1,16 +1,16 @@
 ﻿
 using CsvHelper.Configuration.Attributes;
 
-namespace Hi.UrlRewrite.Extensions.Models
+namespace Hi.UrlRewrite.Models
 {
   /// <summary>
   /// CSV Model for redirect entries
   /// </summary>
   public class RedirectCsvEntry : ICsvModel
   {
-    [Name("Redirected Url")]
+    [Name("RedirectedUrl")]
     public string RedirectedUrl { get; set; }
-    [Name("Item Name")]
+    [Name("ItemName")]
     public string ItemName { get; set; }
     [Name("Type")]
     public string Type { get; set; }

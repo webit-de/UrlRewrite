@@ -4,12 +4,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using CsvHelper;
-using Hi.UrlRewrite.Extensions.Models;
+using Hi.UrlRewrite.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 using Sitecore.StringExtensions;
 
-namespace Hi.UrlRewrite.Extensions.Services
+namespace Hi.UrlRewrite.Services
 {
   public class RedirectImportService
   {

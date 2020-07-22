@@ -1,5 +1,5 @@
 ﻿
-namespace Hi.UrlRewrite.Extensions.Models
+namespace Hi.UrlRewrite.Models
 {
   public interface ICsvModel
   {

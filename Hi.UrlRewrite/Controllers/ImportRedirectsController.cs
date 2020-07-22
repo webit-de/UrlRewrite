@@ -1,13 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Web.Mvc;
-using Hi.UrlRewrite.Extensions.Services;
+using Hi.UrlRewrite.Services;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 using Sitecore.Diagnostics;
 using Sitecore.Mvc.Controllers;
 
-namespace Hi.UrlRewrite.Extensions.Controllers
+namespace Hi.UrlRewrite.Controllers
 {
   [Authorize]
   public class ImportRedirectsController : SitecoreController

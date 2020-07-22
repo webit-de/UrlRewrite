@@ -45,6 +45,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CsvHelper, Version=15.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
+      <HintPath>..\packages\CsvHelper.15.0.5\lib\net45\CsvHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
     <Reference Include="Sitecore.Analytics, Version=11.18.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Sitecore.Analytics.NoReferences.9.0.171219\lib\NET462\Sitecore.Analytics.dll</HintPath>
     </Reference>
@@ -69,13 +75,27 @@
     <Reference Include="Sitecore.Logging, Version=11.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Sitecore.Logging.NoReferences.9.0.171219\lib\NET462\Sitecore.Logging.dll</HintPath>
     </Reference>
+    <Reference Include="Sitecore.Mvc, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Sitecore.Mvc.NoReferences.9.0.171219\lib\NET462\Sitecore.Mvc.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.5.2\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.2\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net461\System.ValueTuple.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.Web.DynamicData" />
@@ -83,6 +103,24 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.Helpers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Mvc.5.2.4\lib\net45\System.Web.Mvc.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Razor.3.2.7\lib\net45\System.Web.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.7\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
@@ -92,6 +130,8 @@
     <Compile Include="Caching\RulesCacheManager.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Controllers\ExportRedirectsController.cs" />
+    <Compile Include="Controllers\ImportRedirectsController.cs" />
     <Compile Include="Entities\Actions\AbortRequest.cs" />
     <Compile Include="Entities\Actions\Base\IBaseAction.cs" />
     <Compile Include="Entities\Actions\Base\IBaseAppendQueryString.cs" />
@@ -146,8 +186,12 @@
     <Compile Include="Helpers\ShortUrlHelpers.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="LogHelper.cs" />
+    <Compile Include="Models\ICsvModel.cs" />
+    <Compile Include="Models\ImportExportReportEntry.cs" />
+    <Compile Include="Models\RedirectCsvEntry.cs" />
     <Compile Include="Module\OutboundModule.cs" />
     <Compile Include="Module\ResponseFilterStream.cs" />
+    <Compile Include="Pipelines\RegisterCustomRoutes.cs" />
     <Compile Include="Processing\InboundRuleInitializer.cs" />
     <Compile Include="Processing\InboundRulesHelper.cs" />
     <Compile Include="Processing\OutboundRewriteProcessor.cs" />
@@ -183,6 +227,11 @@
     <Compile Include="layouts\UrlRewrite\UrlRewriter.aspx.designer.cs">
       <DependentUpon>UrlRewriter.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Services\CsvService.cs" />
+    <Compile Include="Services\FileService.cs" />
+    <Compile Include="Services\RedirectExportService.cs" />
+    <Compile Include="Services\RedirectImportService.cs" />
+    <Compile Include="Services\ReportService.cs" />
     <Compile Include="Tasks\ClearShortUrl.cs" />
     <Compile Include="Tasks\GenerateShortUrl.cs" />
     <Compile Include="Templates\Action\Base\BaseAppendQuerystringItem.cs" />
@@ -269,6 +318,7 @@
     <Content Include="App_Config\Include\Hi.UrlRewrite.Prefetch.Master.config" />
     <Content Include="App_Config\Include\Hi.UrlRewrite.Aggregation.config" />
     <Content Include="App_Config\Include\Hi.UrlRewrite.Commands.config" />
+    <Content Include="App_Config\Include\Hi.UrlRewrite.RegisterCustomRoutes.config" />
     <None Include="layouts\UrlRewrite\Scripts\jquery-1.9.0.intellisense.js" />
     <Content Include="layouts\UrlRewrite\Scripts\app.js" />
     <Content Include="layouts\UrlRewrite\Scripts\bootstrap.js" />

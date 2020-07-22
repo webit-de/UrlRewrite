@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Hi.UrlRewrite.Extensions.Models;
+using Hi.UrlRewrite.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 
-namespace Hi.UrlRewrite.Extensions.Services
+namespace Hi.UrlRewrite.Services
 {
   public class ReportService
   {

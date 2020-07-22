@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using CsvHelper;
-using Hi.UrlRewrite.Extensions.Models;
+using Hi.UrlRewrite.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 
-namespace Hi.UrlRewrite.Extensions.Services
+namespace Hi.UrlRewrite.Services
 {
   public static class CsvService
   {
