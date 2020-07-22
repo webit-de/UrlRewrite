@@ -1,9 +1,6 @@
 ﻿
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 
@@ -11,6 +8,12 @@ namespace Hi.UrlRewrite.Extensions.Services
 {
   public static class FileWriter
   {
+    /// <summary>
+    /// Get the file name based on the root item
+    /// </summary>
+    /// <param name="rootItem">The root item.</param>
+    /// <param name="nameAddition">The name addition</param>
+    /// <returns>The name of the file</returns>
     public static string GetFileName(Item rootItem, string nameAddition = "")
     {
       var siteInfo = Sitecore.Links.LinkManager.ResolveTargetSite(rootItem);
@@ -22,20 +25,16 @@ namespace Hi.UrlRewrite.Extensions.Services
 
       return result + "_" + nameAddition;
     }
-
-    public static ID WriteFile(List<string> messages, Database db, string filePath, string fileName, string fileExtension)
-    {
-      // don't write empty files
-      if (!messages.Any())
-      {
-        return ID.Null;
-      }
-
-      var fileStream = GenerateStreamFromStringCollection(messages);
-
-      return WriteFile(fileStream, db, filePath, fileName, fileExtension);
-    }
-
+    
+    /// <summary>
+    /// Write a media file with the provided file stream
+    /// </summary>
+    /// <param name="fileStream">The file stream</param>
+    /// <param name="db">The database</param>
+    /// <param name="filePath">The file Path without the File</param>
+    /// <param name="fileName">The file Name</param>
+    /// <param name="fileExtension">The file extension </param>
+    /// <returns></returns>
     public static ID WriteFile(Stream fileStream, Database db, string filePath, string fileName, string fileExtension)
     {
       // Create the options
@@ -53,18 +52,6 @@ namespace Hi.UrlRewrite.Extensions.Services
       MediaItem mediaItem = creator.CreateFromStream(fileStream, fileExtension, options);
 
       return mediaItem.ID;
-    }
-
-    private static Stream GenerateStreamFromStringCollection(IEnumerable<string> logEntries)
-    {
-      var builder = new StringBuilder();
-
-      foreach (var entry in logEntries)
-      {
-        builder.AppendLine(entry);
-      }
-
-      return new MemoryStream(Encoding.UTF8.GetBytes(builder.ToString()));
     }
   }
 }
