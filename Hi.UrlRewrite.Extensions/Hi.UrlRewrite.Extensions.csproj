@@ -139,20 +139,20 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="Models\ICsvModel.cs" />
-    <Compile Include="Models\ImportExportLogEntry.cs" />
+    <Compile Include="Models\ImportExportReportEntry.cs" />
     <Compile Include="Models\RedirectCsvEntry.cs" />
     <Compile Include="Pipelines\RegisterCustomRoutes.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controllers\ExportRedirectsController.cs" />
     <Compile Include="Controllers\ImportRedirectsController.cs" />
     <Compile Include="Services\CsvService.cs" />
-    <Compile Include="Services\FileWriter.cs" />
+    <Compile Include="Services\FileService.cs" />
     <Compile Include="Services\RedirectExportService.cs" />
     <Compile Include="Services\RedirectImportService.cs" />
+    <Compile Include="Services\ReportService.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <Content Include="App_Config\Include\Hi.UrlRewrite.Extensions.Commands.config" />
     <Content Include="App_Config\Include\Hi.UrlRewrite.Extensions.RegisterCustomRoutes.config" />
     <Content Include="web.config" />
     <None Include="packages.config" />

@@ -1,10 +1,12 @@
 ﻿
-using System.Text;
 using CsvHelper.Configuration.Attributes;
 
 namespace Hi.UrlRewrite.Extensions.Models
 {
-  public class ImportExportLogEntry : ICsvModel
+  /// <summary>
+  /// CSV Model for the import / export report
+  /// </summary>
+  public class ImportExportReportEntry : ICsvModel
   {
     [Name("Item Name")]
     public string ItemName { get; set; }

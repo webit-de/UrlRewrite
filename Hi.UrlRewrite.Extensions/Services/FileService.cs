@@ -6,7 +6,7 @@ using Sitecore.Data.Items;
 
 namespace Hi.UrlRewrite.Extensions.Services
 {
-  public static class FileWriter
+  public static class FileService
   {
     /// <summary>
     /// Get the file name based on the root item

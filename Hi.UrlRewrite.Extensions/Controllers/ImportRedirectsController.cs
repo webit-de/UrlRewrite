@@ -17,7 +17,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
     /// </summary>
     /// <param name="csvItemId">The item id</param>
     /// <param name="rootFolderId">The id of the root folder to import into.</param>
-    /// <returns>The warning log as csv.</returns>
+    /// <returns>The report as csv.</returns>
     public ActionResult ImportRedirects(string csvItemId, string rootFolderId)
     {
       Assert.IsNotNullOrEmpty(csvItemId, "CSV item Id must not be empty");
@@ -39,9 +39,9 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       }
 
       var importService = new RedirectImportService(db);
-      var warningLog = importService.GenerateRedirectsFromCsv(csvStream, rootFolder);
+      var report = importService.ImportRedirectsFromCsv(csvStream, rootFolder);
       
-      return Content(warningLog);
+      return Content(report);
     }
 
     /// <summary>

@@ -3,6 +3,9 @@ using CsvHelper.Configuration.Attributes;
 
 namespace Hi.UrlRewrite.Extensions.Models
 {
+  /// <summary>
+  /// CSV Model for redirect entries
+  /// </summary>
   public class RedirectCsvEntry : ICsvModel
   {
     [Name("Redirected Url")]

@@ -17,7 +17,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
     /// <param name="rootFolderId">The id of the root folder</param>
     /// <param name="recursive">Whether to export only immediate children or all descendants</param>
     /// <param name="isApiCall">Whether the request is called via api or in UI. This controls how the results are returned</param>
-    /// <returns>The export result as CSV if called from API. The IDs of the result and log items if called from UI</returns>
+    /// <returns>The export result as CSV if called from API. The IDs of the result and report items if called from UI</returns>
     public ActionResult ExportRedirects(string rootFolderId, bool recursive = true, bool isApiCall = true)
     {
       // since this route is only mapped for CM instances, the master database can be used.
@@ -30,7 +30,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
       }
 
       var exportService = new RedirectExportService(db, rootFolder);
-      var csv = exportService.ExportRedirects(recursive, out var logId);
+      var csv = exportService.ExportRedirects(recursive, out var reportId);
 
       // in an api call, return the csv
       if (isApiCall)
@@ -38,7 +38,7 @@ namespace Hi.UrlRewrite.Extensions.Controllers
         return Content(csv.ToString(), "text/csv");
       }
 
-      var resultIds = GetResultsAsJson(csv, db, rootFolder, logId.ToString());
+      var resultIds = GetResultsAsJson(csv, db, rootFolder, reportId.ToString());
       return Content(resultIds, "text/json");
     }
 
@@ -83,13 +83,13 @@ namespace Hi.UrlRewrite.Extensions.Controllers
     /// <param name="csv">The result csv</param>
     /// <param name="db">The database</param>
     /// <param name="rootFolder">The root Folder</param>
-    /// <param name="logId">The id of the log</param>
+    /// <param name="reportId">The id of the report</param>
     /// <returns></returns>
-    private string GetResultsAsJson(byte[] csv, Database db, Item rootFolder, string logId)
+    private string GetResultsAsJson(byte[] csv, Database db, Item rootFolder, string reportId)
     {
       // write the file to the master database for UI access
-      var fileId = FileWriter.WriteFile(new MemoryStream(csv), db, Constants.ExportPath, FileWriter.GetFileName(rootFolder), ".csv");
-      return "{\"resultId\":\"" + fileId + "\",\"logId\":\"" + logId + "\"} ";
+      var fileId = FileService.WriteFile(new MemoryStream(csv), db, Constants.ExportPath, FileService.GetFileName(rootFolder), ".csv");
+      return "{\"resultId\":\"" + fileId + "\",\"reportId\":\"" + reportId + "\"} ";
     }
   }
 }

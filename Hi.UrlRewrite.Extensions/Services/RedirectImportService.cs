@@ -1,6 +1,5 @@
 ﻿
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -9,22 +8,37 @@ using Hi.UrlRewrite.Extensions.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 using Sitecore.StringExtensions;
-using Sitecore.Web;
 
 namespace Hi.UrlRewrite.Extensions.Services
 {
   public class RedirectImportService
   {
-    private readonly List<ImportExportLogEntry> Warnings = new List<ImportExportLogEntry>();
-
+    /// <summary>
+    /// The database
+    /// </summary>
     private readonly Database _db;
+    
+    /// <summary>
+    /// The report service
+    /// </summary>
+    private readonly ReportService _reportService = new ReportService();
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="database"></param>
     public RedirectImportService(Database database)
     {
       _db = database;
     }
 
-    public string GenerateRedirectsFromCsv(Stream csvStream, Item rootItem)
+    /// <summary>
+    /// Import redirect items from the provided csv stream as descendants of the root item
+    /// </summary>
+    /// <param name="csvStream">The csv stream</param>
+    /// <param name="rootItem">The root item</param>
+    /// <returns>The import report</returns>
+    public string ImportRedirectsFromCsv(Stream csvStream, Item rootItem)
     {
       try
       {
@@ -38,27 +52,21 @@ namespace Hi.UrlRewrite.Extensions.Services
             ProcessRedirect(redirect, rootItem);
           }
 
-          if (Warnings.Any())
-          {
-            var csvResult = CsvService.GenerateCsv(Warnings);
-            FileWriter.WriteFile(new MemoryStream(csvResult), _db, Constants.LogPath, FileWriter.GetFileName(rootItem, "Import"), ".csv");
-
-            return System.Text.Encoding.UTF8.GetString(csvResult);
-          }
-
-          return string.Empty;
+          return _reportService.GetReport(rootItem, "ImportReport");
         }
       }
       catch (Exception e)
       {
-        Warnings.Add(new ImportExportLogEntry()
-        {
-          Message = "There has been an error parsing the CSV file:\n" + e.Message
-        });
+        _reportService.AddWarning("There has been an error parsing the CSV file:\n" + e.Message);
         throw;
       }
     }
-
+    
+    /// <summary>
+    /// Process a single Redirect CSV Model
+    /// </summary>
+    /// <param name="redirect">The redirect model</param>
+    /// <param name="rootItem">The root item</param>
     private void ProcessRedirect(RedirectCsvEntry redirect, Item rootItem)
     {
       if (!CheckValidity(redirect, out var existingRedirect))
@@ -84,13 +92,7 @@ namespace Hi.UrlRewrite.Extensions.Services
           ProcessShortUrlItem(redirect, rootItem, existingRedirect);
           return;
         default:
-          Warnings.Add(new ImportExportLogEntry()
-          {
-            ItemName = redirect.ItemName,
-            ItemId = redirect.ItemId,
-            Message = "Redirect has an invalid redirect type and can not be imported.",
-            Created = false
-          });
+          _reportService.AddWarning("Redirect has an invalid redirect type and can not be imported.", redirect, false);
           return;
       }
     }
@@ -108,6 +110,12 @@ namespace Hi.UrlRewrite.Extensions.Services
       }
     }
 
+    /// <summary>
+    /// Process the redirect as Simple Redirect
+    /// </summary>
+    /// <param name="redirect">The redirect item</param>
+    /// <param name="rootItem">The root item</param>
+    /// <param name="existingRedirect">The existing item with the same id</param>
     private void ProcessSimpleRedirect(RedirectCsvEntry redirect, Item rootItem, Item existingRedirect = null)
     {
       using (new Sitecore.SecurityModel.SecurityDisabler())
@@ -130,28 +138,38 @@ namespace Hi.UrlRewrite.Extensions.Services
             simpleRedirect.MoveTo(parentFolder);
           }
 
-          var path = GetPath(redirect);
-
-          simpleRedirect.Editing.BeginEdit();
-          simpleRedirect["Path"] = path;
-          simpleRedirect["Target"] = GetRedirectTarget(redirect);
-          // if the path is empty, disable the redirect regardless of status field to avoid ambiguous paths.
-          simpleRedirect["Enabled"] = path == string.Empty ? "0" : GetRedirectStatus(redirect);
-          simpleRedirect.Editing.EndEdit();
+          PopulateSimpleRedirect(redirect, simpleRedirect);
         }
         catch (Exception e)
         {
-          Warnings.Add(new ImportExportLogEntry()
-          {
-            ItemName = redirect.ItemName,
-            ItemId = redirect.ItemId,
-            Message = "There has been an error processing the Simple Redirect:\n" + e.Message,
-            Created = false
-          });
+          _reportService.AddWarning("There has been an error processing the Simple Redirect:\n" + e.Message, redirect, false);
         }
       }
     }
 
+    /// <summary>
+    /// Populate the a Simple Redirect item with the provided data
+    /// </summary>
+    /// <param name="data">The data</param>
+    /// <param name="simpleRedirect">The Simple Redirect item</param>
+    private void PopulateSimpleRedirect(RedirectCsvEntry data, Item simpleRedirect)
+    {
+      var path = GetRedirectedPath(data);
+
+      simpleRedirect.Editing.BeginEdit();
+      simpleRedirect["Path"] = path;
+      simpleRedirect["Target"] = GetRedirectTarget(data);
+      // if the path is empty, disable the redirect regardless of status field to avoid ambiguous paths.
+      simpleRedirect["Enabled"] = path == string.Empty ? "0" : GetRedirectStatus(data);
+      simpleRedirect.Editing.EndEdit();
+    }
+
+    /// <summary>
+    /// Process the redirect as Short URL
+    /// </summary>
+    /// <param name="redirect">The redirect item</param>
+    /// <param name="rootItem">The root item</param>
+    /// <param name="existingRedirect">The existing item with the same id</param>
     private void ProcessShortUrlItem(RedirectCsvEntry redirect, Item rootItem, Item existingRedirect = null)
     {
       using (new Sitecore.SecurityModel.SecurityDisabler())
@@ -173,28 +191,31 @@ namespace Hi.UrlRewrite.Extensions.Services
             shortUrl = existingRedirect;
             shortUrl.MoveTo(parentFolder);
           }
-
-          var token = GetToken(redirect);
-
-          shortUrl.Editing.BeginEdit();
-          shortUrl["Short Url"] = token;
-          shortUrl["Target"] = GetRedirectTarget(redirect);
-          // if the token is empty, disable the redirect regardless of status field to avoid ambiguous paths.
-          shortUrl["Enabled"] = token == string.Empty ? "0" : GetRedirectStatus(redirect);
-          shortUrl["Short Url Settings"] = FindShortUrlSettings(redirect);
-          shortUrl.Editing.EndEdit();
+          PopulateShortUrl(redirect, shortUrl);
         }
         catch (Exception e)
         {
-          Warnings.Add(new ImportExportLogEntry()
-          {
-            ItemName = redirect.ItemName,
-            ItemId = redirect.ItemId,
-            Message = "There has been an error processing the Short URL:\n" + e.Message,
-            Created = false
-          });
+          _reportService.AddWarning("There has been an error processing the Short URL:\n" + e.Message, redirect, false);
         }
       }
+    }
+
+    /// <summary>
+    /// Populate the a Short URL item with the provided data
+    /// </summary>
+    /// <param name="data">The data</param>
+    /// <param name="shortUrl">The Short URL item</param>
+    private void PopulateShortUrl(RedirectCsvEntry data, Item shortUrl)
+    {
+      var token = GetToken(data);
+
+      shortUrl.Editing.BeginEdit();
+      shortUrl["Short Url"] = token;
+      shortUrl["Target"] = GetRedirectTarget(data);
+      // if the token is empty, disable the redirect regardless of status field to avoid ambiguous paths.
+      shortUrl["Enabled"] = token == string.Empty ? "0" : GetRedirectStatus(data);
+      shortUrl["Short Url Settings"] = FindShortUrlSettings(data);
+      shortUrl.Editing.EndEdit();
     }
 
     private static string GetRedirectStatus(RedirectCsvEntry redirect)
@@ -209,33 +230,31 @@ namespace Hi.UrlRewrite.Extensions.Services
     /// <returns>The target field value</returns>
     private string GetRedirectTarget(RedirectCsvEntry redirect)
     {
-      var startIndex = redirect.Target.IndexOf('{');
-      var id = redirect.Target.Substring(startIndex, 38);
+      var startIndex = redirect.RedirectTarget.IndexOf('{');
+      var id = redirect.RedirectTarget.Substring(startIndex, 38);
 
       // if no valid GUID is contained in the target string, assume an external link
       if (!Guid.TryParse(id, out var guid))
       {
-        return redirect.Target;
+        return redirect.RedirectTarget;
       }
 
       var targetItem = _db.GetItem(ID.Parse(guid));
       if (targetItem != null)
       {
-        return redirect.Target;
+        return redirect.RedirectTarget;
       }
 
-      Warnings.Add(new ImportExportLogEntry()
-      {
-        ItemName = redirect.ItemName,
-        ItemId = redirect.ItemId,
-        Message = "The target for the redirect does not exist. The Link will be broken.",
-        Created = true
-      });
-
-      return redirect.Target;
+      _reportService.AddWarning("The target for the redirect does not exist. The Link will be broken.", redirect, true);
+      return redirect.RedirectTarget;
     }
 
-    private string GetPath(RedirectCsvEntry redirect)
+    /// <summary>
+    /// Get the redirected path
+    /// </summary>
+    /// <param name="redirect">The redirect item</param>
+    /// <returns>The redirected path if it's unique, otherwise an empty string</returns>
+    private string GetRedirectedPath(RedirectCsvEntry redirect)
     {
       // do NOT use caching here!
       var query = "/sitecore/content//*[@@templateid='" + Templates.Inbound.SimpleRedirectItem.TemplateId + "']";
@@ -246,17 +265,15 @@ namespace Hi.UrlRewrite.Extensions.Services
         return redirect.RedirectedUrl;
       }
 
-      Warnings.Add(new ImportExportLogEntry()
-      {
-        ItemName = redirect.ItemName,
-        ItemId = redirect.ItemId,
-        Message = "The path for the Simple Redirect is not unique and has been cleared. The redirect has been disabled.",
-        Created = true
-      });
-
+      _reportService.AddWarning("The path for the Simple Redirect is not unique and has been cleared. The redirect has been disabled.", redirect, true);
       return string.Empty;
     }
 
+    /// <summary>
+    /// Get the Short URL token
+    /// </summary>
+    /// <param name="redirect">The redirect item</param>
+    /// <returns>The Short URL token if it's unique, otherwise an empty string</returns>
     private string GetToken(RedirectCsvEntry redirect)
     {
       // do NOT use caching here!
@@ -268,17 +285,15 @@ namespace Hi.UrlRewrite.Extensions.Services
         return redirect.RedirectedUrl;
       }
 
-      Warnings.Add(new ImportExportLogEntry()
-      {
-        ItemName = redirect.ItemName,
-        ItemId = redirect.ItemId,
-        Message = "The token for the Short Url is not unique and has been cleared. The redirect has been disabled.",
-        Created = true
-      });
-
+      _reportService.AddWarning("The token for the Short Url is not unique and has been cleared. The redirect has been disabled.", redirect, true);
       return string.Empty;
     }
 
+    /// <summary>
+    /// Find the Short URL Settings based on the prefix
+    /// </summary>
+    /// <param name="redirect">The redirect item</param>
+    /// <returns>A Short Url Settings item ID with matching prefix</returns>
     private string FindShortUrlSettings(RedirectCsvEntry redirect)
     {
       var query = "/sitecore/content//*[@@templateid='" + Templates.Settings.ShortUrlSetting.TemplateId + "']";
@@ -286,20 +301,19 @@ namespace Hi.UrlRewrite.Extensions.Services
 
       if (shortUrlSettings == null)
       {
-        Warnings.Add(new ImportExportLogEntry()
-        {
-          ItemName = redirect.ItemName,
-          ItemId = redirect.ItemId,
-          Message = "Could not find matching Short URL Setting. The field has been left empty.",
-          Created = true
-        });
-
+        _reportService.AddWarning("Could not find matching Short URL Setting. The field has been left empty.", redirect, true);
         return string.Empty;
       }
 
       return shortUrlSettings.ID.ToString();
     }
 
+    /// <summary>
+    /// Check validity of a redirect CSV Model
+    /// </summary>
+    /// <param name="redirect">The redirect model</param>
+    /// <param name="existingItem">Out parameter for existing Item with the same id</param>
+    /// <returns>True, if the CSV Model contains only valid data</returns>
     private bool CheckValidity(RedirectCsvEntry redirect, out Item existingItem)
     {
       bool result = true;
@@ -309,8 +323,6 @@ namespace Hi.UrlRewrite.Extensions.Services
       {
         result = false;
       }
-
-
 
       if (existingItem == null)
       {
@@ -345,14 +357,7 @@ namespace Hi.UrlRewrite.Extensions.Services
             return true;
           }
 
-          Warnings.Add(new ImportExportLogEntry()
-          {
-            ItemName = redirect.ItemName,
-            ItemId = redirect.ItemId,
-            Message = "The imported redirect has a different type than the existing item and can not be imported.",
-            Created = false
-          });
-
+          _reportService.AddWarning("The imported redirect has a different type than the existing item and can not be imported.", redirect, false);
           return false;
 
         case Constants.RedirectType.SIMPLEREDIRECT:
@@ -360,29 +365,16 @@ namespace Hi.UrlRewrite.Extensions.Services
           {
             return true;
           }
-          Warnings.Add(new ImportExportLogEntry()
-          {
-            ItemName = redirect.ItemName,
-            ItemId = redirect.ItemId,
-            Message = "The imported redirect has a different type than the existing item and can not be imported.",
-            Created = false
-          });
 
+          _reportService.AddWarning("The imported redirect has a different type than the existing item and can not be imported.", redirect, false);
           return false;
 
         default:
-          Warnings.Add(new ImportExportLogEntry()
-          {
-            ItemName = redirect.ItemName,
-            ItemId = redirect.ItemId,
-            Message = "The redirect has an invalid redirect type and can not be imported.",
-            Created = false
-          });
-
+          _reportService.AddWarning("The redirect has an invalid redirect type and can not be imported.", redirect, false);
           return false;
       }
     }
-
+    
     /// <summary>
     /// Check if a mandatory field is empty.
     /// </summary>
@@ -402,16 +394,10 @@ namespace Hi.UrlRewrite.Extensions.Services
           redirect.RedirectedUrl.IsNullOrEmpty() ||
           redirect.Type == Constants.RedirectType.SHORTURL.ToString() && redirect.ShortUrlPrefix.IsNullOrEmpty() ||
           redirect.Status.IsNullOrEmpty() ||
-          redirect.Target.IsNullOrEmpty())
+          redirect.RedirectTarget.IsNullOrEmpty())
       {
-        Warnings.Add(new ImportExportLogEntry()
-        {
-          ItemName = redirect.ItemName,
-          ItemId = redirect.ItemId,
-          Message = "The redirect has at least one empty field and can not be imported.",
-          Created = false
-        });
 
+        _reportService.AddWarning("The redirect has at least one empty field and can not be imported.", redirect, false);
         return false;
       }
 
@@ -433,14 +419,7 @@ namespace Hi.UrlRewrite.Extensions.Services
       {
         if (redirect.ItemId != string.Empty)
         {
-          Warnings.Add(new ImportExportLogEntry()
-          {
-            ItemName = redirect.ItemName,
-            ItemId = redirect.ItemId,
-            Message = "The redirect has an invalid id and can not be imported.",
-            Created = false
-          });
-
+          _reportService.AddWarning("The redirect has an invalid id and can not be imported.", redirect, false);
           return false;
         }
         return true;
