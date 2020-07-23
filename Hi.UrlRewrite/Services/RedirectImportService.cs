@@ -154,7 +154,7 @@ namespace Hi.UrlRewrite.Services
     /// <param name="simpleRedirect">The Simple Redirect item</param>
     private void PopulateSimpleRedirect(RedirectCsvEntry data, Item simpleRedirect)
     {
-      var path = GetRedirectedPath(data);
+      var path = GetRedirectedPath(data, simpleRedirect);
 
       simpleRedirect.Editing.BeginEdit();
       simpleRedirect["Path"] = path;
@@ -268,12 +268,15 @@ namespace Hi.UrlRewrite.Services
     /// Get the redirected path
     /// </summary>
     /// <param name="redirect">The redirect item</param>
+    /// <param name="createdItem">The created item</param>
     /// <returns>The redirected path if it's unique, otherwise an empty string</returns>
-    private string GetRedirectedPath(RedirectCsvEntry redirect)
+    private string GetRedirectedPath(RedirectCsvEntry redirect, Item createdItem)
     {
       // do NOT use caching here!
       var query = "/sitecore/content//*[@@templateid='" + Templates.Inbound.SimpleRedirectItem.TemplateId + "']";
-      var isPathUnique = _db.SelectItems(query).All(x => x["Path"] != redirect.RedirectedUrl);
+
+      // exclude the created item, since simple redirects have their name as standard value for the path field.
+      var isPathUnique = _db.SelectItems(query).Where(x => x.ID != createdItem.ID).All(x => x["Path"] != redirect.RedirectedUrl);
 
       if (isPathUnique)
       {
