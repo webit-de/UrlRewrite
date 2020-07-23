@@ -1,0 +1,60 @@
+<project>
+  <Metadata>
+    <metadata>
+      <PackageName>URL_Rewrite-Extensions-1.8.4</PackageName>
+      <Author>webit! Gesellschaft für neue Medien</Author>
+      <Version />
+      <Revision />
+      <License />
+      <Comment />
+      <Attributes />
+      <Readme />
+      <Publisher />
+      <PostStep />
+      <PackageID />
+    </metadata>
+  </Metadata>
+  <SaveProject>True</SaveProject>
+  <Sources>
+    <xitems>
+      <Entries>
+        <x-item>/core/sitecore/content/Applications/Content Editor/Context Menues/Default/Redirects/{1A335A62-654C-4EAC-9A16-90502D8A0137}/invariant/0</x-item>
+        <x-item>/core/sitecore/content/Applications/Content Editor/Context Menues/Default/Redirects/Export/{4A122D1C-5E50-4FF0-9DC4-970EEBC59AA8}/invariant/0</x-item>
+        <x-item>/core/sitecore/content/Applications/Content Editor/Context Menues/Default/Redirects/Import/{BC34B13F-F148-4278-B199-E00F0091C055}/invariant/0</x-item>
+        <x-item>/master/sitecore/system/Modules/Url Rewrite/Content/Extensions/{63B62358-9AA5-4266-A979-EFD348A88F46}/invariant/0</x-item>
+        <x-item>/master/sitecore/system/Modules/Url Rewrite/Content/Extensions/Scripts/{AC4F02A4-80D2-4152-892A-7026B642ED30}/invariant/0</x-item>
+        <x-item>/master/sitecore/system/Modules/Url Rewrite/Content/Extensions/Scripts/RedirectExportDialogue/{5A3D2D3B-C56F-4AEF-84E8-08FCB9598BFE}/invariant/0</x-item>
+        <x-item>/master/sitecore/system/Modules/Url Rewrite/Content/Extensions/Scripts/RedirectImportDialogue/{B4D24E93-23D2-44C8-BFFF-8F01B6EE8FA3}/invariant/0</x-item>
+        <x-item>/master/sitecore/templates/User Defined/Url Rewrite/Redirect Folder/Import Export/{73D82E6D-C324-4F8C-9AC2-548ED75C10DC}/invariant/0</x-item>
+        <x-item>/master/sitecore/templates/User Defined/Url Rewrite/Redirect Folder/Import Export/Export Account Name/{6E2CA5C7-35F8-4194-B03B-5C62DD9DE46A}/invariant/0</x-item>
+        <x-item>/master/sitecore/templates/User Defined/Url Rewrite/Redirect Folder/Import Export/Export Account Password/{34C4649D-9F1D-40CB-92B0-A6F2A8F58A9B}/invariant/0</x-item>
+      </Entries>
+      <SkipVersions>False</SkipVersions>
+      <Converter>
+        <ItemToEntryConverter>
+          <Transforms>
+            <InstallerConfigurationTransform>
+              <Options>
+                <BehaviourOptions>
+                  <ItemMode>Undefined</ItemMode>
+                  <ItemMergeMode>Undefined</ItemMergeMode>
+                </BehaviourOptions>
+              </Options>
+            </InstallerConfigurationTransform>
+          </Transforms>
+        </ItemToEntryConverter>
+      </Converter>
+      <Include />
+      <Exclude />
+      <Name>PowershellExtensions</Name>
+    </xitems>
+  </Sources>
+  <Converter>
+    <TrivialConverter>
+      <Transforms />
+    </TrivialConverter>
+  </Converter>
+  <Include />
+  <Exclude />
+  <Name />
+</project>
