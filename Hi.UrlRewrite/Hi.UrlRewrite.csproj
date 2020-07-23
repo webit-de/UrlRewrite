@@ -318,7 +318,7 @@
     <Content Include="App_Config\Include\Hi.UrlRewrite.Prefetch.Master.config" />
     <Content Include="App_Config\Include\Hi.UrlRewrite.Aggregation.config" />
     <Content Include="App_Config\Include\Hi.UrlRewrite.Commands.config" />
-    <Content Include="App_Config\Include\Hi.UrlRewrite.RegisterCustomRoutes.config" />
+    <None Include="App_Config\Include\Hi.UrlRewrite.RegisterCustomRoutes.config.disabled" />
     <None Include="layouts\UrlRewrite\Scripts\jquery-1.9.0.intellisense.js" />
     <Content Include="layouts\UrlRewrite\Scripts\app.js" />
     <Content Include="layouts\UrlRewrite\Scripts\bootstrap.js" />
