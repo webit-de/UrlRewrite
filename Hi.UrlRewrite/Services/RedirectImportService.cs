@@ -430,19 +430,22 @@ namespace Hi.UrlRewrite.Services
     {
       existingItem = null;
 
-      // check the id is valid
-      if (!Guid.TryParse(redirect.ItemId, out var redirectGuid))
+      // redirect item id is valid
+      if (Guid.TryParse(redirect.ItemId, out var redirectGuid))
       {
-        if (redirect.ItemId != string.Empty)
-        {
-          _reportService.AddWarning("The redirect has an invalid id and can not be imported.", redirect, false);
-          return false;
-        }
+        existingItem = _db.GetItem(ID.Parse(redirectGuid));
         return true;
       }
 
-      existingItem = _db.GetItem(ID.Parse(redirectGuid));
-      return true;
+      // no id available
+      if (redirect.ItemId.IsNullOrEmpty())
+      {
+        return true;
+      }
+
+      // invalid item id
+      _reportService.AddWarning("The redirect has an invalid id and can not be imported.", redirect, false);
+      return false;
     }
 
     /// <summary>
