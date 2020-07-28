@@ -123,22 +123,7 @@ namespace Hi.UrlRewrite.Services
       {
         try
         {
-          Item simpleRedirect;
-          var parentFolder = CreateFolderStructure(redirect, rootItem);
-
-          // if no redirect with the id is existing, create a new one
-          if (existingRedirect == null)
-          {
-            var template = _db.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.SimpleRedirectItem.TemplateId)));
-            simpleRedirect = parentFolder.Add(redirect.ItemName, template);
-          }
-          // modify the existing one otherwise
-          else
-          {
-            simpleRedirect = existingRedirect;
-            simpleRedirect.MoveTo(parentFolder);
-          }
-
+          Item simpleRedirect = CreateRedirectItem(redirect, rootItem, existingRedirect, Templates.Inbound.SimpleRedirectItem.TemplateId);
           PopulateSimpleRedirect(redirect, simpleRedirect);
         }
         catch (Exception e)
@@ -177,21 +162,7 @@ namespace Hi.UrlRewrite.Services
       {
         try
         {
-          Item shortUrl;
-          var parentFolder = CreateFolderStructure(redirect, rootItem);
-
-          // if no redirect with the id is existing, create a new one
-          if (existingRedirect == null)
-          {
-            var template = _db.GetTemplate(ID.Parse(Guid.Parse(Templates.Inbound.ShortUrlItem.TemplateId)));
-            shortUrl = parentFolder.Add(redirect.ItemName, template);
-          }
-          // modify the existing one otherwise
-          else
-          {
-            shortUrl = existingRedirect;
-            shortUrl.MoveTo(parentFolder);
-          }
+          var shortUrl = CreateRedirectItem(redirect, rootItem, existingRedirect, Templates.Inbound.ShortUrlItem.TemplateId);
           PopulateShortUrl(redirect, shortUrl);
         }
         catch (Exception e)
@@ -200,7 +171,7 @@ namespace Hi.UrlRewrite.Services
         }
       }
     }
-
+    
     /// <summary>
     /// Populate the a Short URL item with the provided data
     /// </summary>
@@ -217,6 +188,35 @@ namespace Hi.UrlRewrite.Services
       shortUrl["Enabled"] = token == string.Empty ? "0" : GetRedirectStatus(data);
       shortUrl["Short Url Settings"] = FindShortUrlSettings(data);
       shortUrl.Editing.EndEdit();
+    }
+
+    /// <summary>
+    /// Creates an unpopulated <see cref="Item"/> for the specified <see cref="redirect"/>.
+    /// </summary>
+    /// <param name="redirect">The redirect csv data item.</param>
+    /// <param name="rootItem">The redirect root.</param>
+    /// <param name="existingRedirect">The existing item with the same id.</param>
+    /// <param name="templateId">Specfies the template used to create the redirect item.</param>
+    /// <returns></returns>
+    private Item CreateRedirectItem(RedirectCsvEntry redirect, Item rootItem, Item existingRedirect, string templateId)
+    {
+      Item result;
+      var parentFolder = CreateFolderStructure(redirect, rootItem);
+
+      // if no redirect with the id is existing, create a new one
+      if (existingRedirect == null)
+      {
+        var template = _db.GetTemplate(ID.Parse(Guid.Parse(templateId)));
+        result = parentFolder.Add(redirect.ItemName, template);
+      }
+      // modify the existing one otherwise
+      else
+      {
+        result = existingRedirect;
+        result.MoveTo(parentFolder);
+      }
+
+      return result;
     }
 
     private static string GetRedirectStatus(RedirectCsvEntry redirect)
