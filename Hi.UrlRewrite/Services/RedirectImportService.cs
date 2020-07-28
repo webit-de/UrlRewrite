@@ -3,6 +3,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using CsvHelper;
 using Hi.UrlRewrite.Models;
 using Sitecore.Data;
@@ -70,31 +71,29 @@ namespace Hi.UrlRewrite.Services
     /// <param name="rootItem">The root item</param>
     private void ProcessRedirect(RedirectCsvEntry redirect, Item rootItem)
     {
-      if (!CheckValidity(redirect, out var existingRedirect))
+      if (RedirectDataIsValid(redirect, out var existingRedirect))
       {
-        return;
-      }
+        // if DELETE status is set, delete the item
+        if (redirect.Status.ToUpper() == Constants.ImportStatus.DELETE.ToString())
+        {
+          DeleteRedirect(redirect);
+          return;
+        }
 
-      // if DELETE status is set, delete the item
-      if (redirect.Status.ToUpper() == Constants.ImportStatus.DELETE.ToString())
-      {
-        DeleteRedirect(redirect);
-        return;
-      }
-
-      // update redirect or create a new one
-      Enum.TryParse(redirect.Type, true, out Constants.RedirectType typeEnum);
-      switch (typeEnum)
-      {
-        case Constants.RedirectType.SIMPLEREDIRECT:
-          ProcessSimpleRedirect(redirect, rootItem, existingRedirect);
-          return;
-        case Constants.RedirectType.SHORTURL:
-          ProcessShortUrlItem(redirect, rootItem, existingRedirect);
-          return;
-        default:
-          _reportService.AddWarning("Redirect has an invalid redirect type and can not be imported.", redirect, false);
-          return;
+        // update redirect or create a new one
+        Enum.TryParse(redirect.Type, true, out Constants.RedirectType typeEnum);
+        switch (typeEnum)
+        {
+          case Constants.RedirectType.SIMPLEREDIRECT:
+            ProcessSimpleRedirect(redirect, rootItem, existingRedirect);
+            return;
+          case Constants.RedirectType.SHORTURL:
+            ProcessShortUrlItem(redirect, rootItem, existingRedirect);
+            return;
+          default:
+            _reportService.AddWarning("Redirect has an invalid or not supported redirect type and can not be imported.", redirect, false);
+            return;
+        }
       }
     }
 
@@ -333,7 +332,7 @@ namespace Hi.UrlRewrite.Services
     /// <param name="redirect">The redirect model</param>
     /// <param name="existingItem">Out parameter for existing Item with the same id</param>
     /// <returns>True, if the CSV Model contains only valid data</returns>
-    private bool CheckValidity(RedirectCsvEntry redirect, out Item existingItem)
+    private bool RedirectDataIsValid(RedirectCsvEntry redirect, out Item existingItem)
     {
       bool result = true;
 
@@ -349,12 +348,12 @@ namespace Hi.UrlRewrite.Services
       }
 
       // check validity dependent from existing items
-      if (!CheckEqualType(redirect, existingItem))
+      if (ExistingItemHasSameRedirectType(redirect, existingItem))
       {
-        result = false;
+        return result;
       }
 
-      return result;
+      return false;
     }
 
     /// <summary>
@@ -362,31 +361,30 @@ namespace Hi.UrlRewrite.Services
     /// </summary>
     /// <param name="redirect">The imported redirect</param>
     /// <param name="existingItem">The existing redirect item</param>
-    /// <returns>True if the imported redirect item has the same type as the existing item.</returns>
-    private bool CheckEqualType(RedirectCsvEntry redirect, Item existingItem)
+    /// <returns>Returns <code>true</code> if the imported redirect item has the same type as the existing item; otherwise <code>false</code>.</returns>
+    private bool ExistingItemHasSameRedirectType(RedirectCsvEntry redirect, Item existingItem)
     {
-
-      Enum.TryParse(redirect.Type, true, out Constants.RedirectType typeEnum);
-
-      switch (typeEnum)
+      bool CheckExistingItemTemplateType(string templateId)
       {
-        case Constants.RedirectType.SHORTURL:
-          if (existingItem.TemplateID.ToString() == Templates.Inbound.SimpleRedirectItem.TemplateId)
-          {
-            return true;
-          }
+        if (existingItem.TemplateID.ToString() == templateId)
+        {
+          return true;
+        }
 
-          _reportService.AddWarning("The imported redirect has a different type than the existing item and can not be imported.", redirect, false);
-          return false;
+        _reportService.AddWarning("The imported redirect has a different type than the existing item and can not be imported.", redirect, false);
+        return false;
+      }
+
+      Enum.TryParse(redirect.Type, true, out Constants.RedirectType redirectType);
+
+      switch (redirectType)
+      {
+        // CR: Prüfen ob hier die Template Typen vertauscht wurden.
+        case Constants.RedirectType.SHORTURL:
+          return CheckExistingItemTemplateType(Templates.Inbound.SimpleRedirectItem.TemplateId);
 
         case Constants.RedirectType.SIMPLEREDIRECT:
-          if (existingItem.TemplateID.ToString() == Templates.Inbound.ShortUrlItem.TemplateId)
-          {
-            return true;
-          }
-
-          _reportService.AddWarning("The imported redirect has a different type than the existing item and can not be imported.", redirect, false);
-          return false;
+          return CheckExistingItemTemplateType(Templates.Inbound.ShortUrlItem.TemplateId);
 
         default:
           _reportService.AddWarning("The redirect has an invalid redirect type and can not be imported.", redirect, false);
@@ -415,7 +413,6 @@ namespace Hi.UrlRewrite.Services
           redirect.Status.IsNullOrEmpty() ||
           redirect.RedirectTarget.IsNullOrEmpty())
       {
-
         _reportService.AddWarning("The redirect has at least one empty field and can not be imported.", redirect, false);
         return false;
       }
