@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Globalization;
 using System.IO;
@@ -21,7 +21,7 @@ namespace Hi.UrlRewrite.Services
     /// <summary>
     /// The report service
     /// </summary>
-    private readonly ReportService _reportService = new ReportService();
+    private readonly ReportService _reportService;
 
     /// <summary>
     /// Constructor
@@ -30,6 +30,7 @@ namespace Hi.UrlRewrite.Services
     public RedirectImportService(Database database)
     {
       _db = database;
+      _reportService = new ReportService();
     }
 
     /// <summary>
