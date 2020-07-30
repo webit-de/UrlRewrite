@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using CsvHelper;
+using Hi.UrlRewrite.Extensions;
 using Hi.UrlRewrite.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
@@ -18,11 +19,11 @@ namespace Hi.UrlRewrite.Services
     /// The database
     /// </summary>
     private readonly Database _db;
-    
+
     /// <summary>
     /// The report service
     /// </summary>
-    private readonly ReportService _reportService;
+    public ReportService ReportService { get; }
 
     /// <summary>
     /// Constructor
@@ -31,7 +32,7 @@ namespace Hi.UrlRewrite.Services
     public RedirectImportService(Database database)
     {
       _db = database;
-      _reportService = new ReportService();
+      ReportService = new ReportService();
     }
 
     /// <summary>
@@ -54,12 +55,12 @@ namespace Hi.UrlRewrite.Services
             ProcessRedirect(redirect, rootItem);
           }
 
-          return _reportService.GetReport(rootItem, "ImportReport");
+          return ReportService.GetReport(rootItem, "ImportReport");
         }
       }
       catch (Exception e)
       {
-        _reportService.AddWarning("There has been an error parsing the CSV file:\n" + e.Message);
+        ReportService.AddWarning("There has been an error parsing the CSV file:\n" + e.Message);
         throw;
       }
     }
@@ -91,7 +92,7 @@ namespace Hi.UrlRewrite.Services
             ProcessShortUrlItem(redirect, rootItem, existingRedirect);
             return;
           default:
-            _reportService.AddWarning("Redirect has an invalid or not supported redirect type and can not be imported.", redirect, false);
+            ReportService.AddWarning("Redirect has an invalid or not supported redirect type and can not be imported.", redirect, false);
             return;
         }
       }
@@ -127,7 +128,7 @@ namespace Hi.UrlRewrite.Services
         }
         catch (Exception e)
         {
-          _reportService.AddWarning("There has been an error processing the Simple Redirect:\n" + e.Message, redirect, false);
+          ReportService.AddWarning("There has been an error processing the Simple Redirect:\n" + e.Message, redirect, false);
         }
       }
     }
@@ -166,7 +167,7 @@ namespace Hi.UrlRewrite.Services
         }
         catch (Exception e)
         {
-          _reportService.AddWarning("There has been an error processing the Short URL:\n" + e.Message, redirect, false);
+          ReportService.AddWarning("There has been an error processing the Short URL:\n" + e.Message, redirect, false);
         }
       }
     }
@@ -240,7 +241,7 @@ namespace Hi.UrlRewrite.Services
 
       if (!Guid.TryParse(id, out var guid))
       {
-        _reportService.AddWarning("The target for the redirect is invalid. The Link will be broken.", redirect, true);
+        ReportService.AddWarning("The target for the redirect is invalid. The Link will be broken.", redirect, true);
         return redirect.RedirectTarget;
       }
 
@@ -250,7 +251,7 @@ namespace Hi.UrlRewrite.Services
         return redirect.RedirectTarget;
       }
 
-      _reportService.AddWarning("The target for the redirect does not exist. The Link will be broken.", redirect, true);
+      ReportService.AddWarning("The target for the redirect does not exist. The Link will be broken.", redirect, true);
       return redirect.RedirectTarget;
     }
 
@@ -283,7 +284,7 @@ namespace Hi.UrlRewrite.Services
         return redirect.RedirectedUrl;
       }
 
-      _reportService.AddWarning("The path for the Simple Redirect is not unique and has been cleared. The redirect has been disabled.", redirect, true);
+      ReportService.AddWarning("The path for the Simple Redirect is not unique and has been cleared. The redirect has been disabled.", redirect, true);
       return string.Empty;
     }
 
@@ -303,7 +304,7 @@ namespace Hi.UrlRewrite.Services
         return redirect.RedirectedUrl;
       }
 
-      _reportService.AddWarning("The token for the Short Url is not unique and has been cleared. The redirect has been disabled.", redirect, true);
+      ReportService.AddWarning("The token for the Short Url is not unique and has been cleared. The redirect has been disabled.", redirect, true);
       return string.Empty;
     }
 
@@ -319,7 +320,7 @@ namespace Hi.UrlRewrite.Services
 
       if (shortUrlSettings == null)
       {
-        _reportService.AddWarning("Could not find matching Short URL Setting. The field has been left empty.", redirect, true);
+        ReportService.AddWarning("Could not find matching Short URL Setting. The field has been left empty.", redirect, true);
         return string.Empty;
       }
 
@@ -371,7 +372,7 @@ namespace Hi.UrlRewrite.Services
           return true;
         }
 
-        _reportService.AddWarning("The imported redirect has a different type than the existing item and can not be imported.", redirect, false);
+        ReportService.AddWarning("The imported redirect has a different type than the existing item and can not be imported.", redirect, false);
         return false;
       }
 
@@ -387,7 +388,7 @@ namespace Hi.UrlRewrite.Services
           return CheckExistingItemTemplateType(Templates.Inbound.ShortUrlItem.TemplateId);
 
         default:
-          _reportService.AddWarning("The redirect has an invalid redirect type and can not be imported.", redirect, false);
+          ReportService.AddWarning("The redirect has an invalid redirect type and can not be imported.", redirect, false);
           return false;
       }
     }
@@ -413,7 +414,7 @@ namespace Hi.UrlRewrite.Services
           redirect.Status.IsNullOrEmpty() ||
           redirect.RedirectTarget.IsNullOrEmpty())
       {
-        _reportService.AddWarning("The redirect has at least one empty field and can not be imported.", redirect, false);
+        ReportService.AddWarning("The redirect has at least one empty field and can not be imported.", redirect, false);
         return false;
       }
 
@@ -439,12 +440,10 @@ namespace Hi.UrlRewrite.Services
 
       // no id available
       if (redirect.ItemId.IsNullOrEmpty())
-      {
         return true;
-      }
 
       // invalid item id
-      _reportService.AddWarning("The redirect has an invalid id and can not be imported.", redirect, false);
+      ReportService.AddWarning("The redirect has an invalid id and can not be imported.", redirect, false);
       return false;
     }
 
@@ -458,7 +457,7 @@ namespace Hi.UrlRewrite.Services
     {
       var currentFolder = rootItem;
 
-      var foldersInPath = redirect.RelativeItemPath.Split('/').Where(x => !x.IsNullOrEmpty()).ToArray();
+      var foldersInPath = redirect.RelativeItemPath.Split('/').Where(x => x.HasValue()).ToArray();
 
       // go through every folder in the hierarchy and add missing ones
       foreach (var folder in foldersInPath)

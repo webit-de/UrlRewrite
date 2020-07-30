@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Hi.UrlRewrite.Extensions;
 using Hi.UrlRewrite.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
@@ -19,7 +20,17 @@ namespace Hi.UrlRewrite.Services
     /// <summary>
     /// The report service
     /// </summary>
-    private readonly ReportService _reportService = new ReportService();
+    public ReportService ReportService { get; }
+
+    /// <summary>
+    /// The selected root item
+    /// </summary>
+    public Item RootItem { get; }
+
+    /// <summary>
+    /// The length of the item path of the redirect folder.
+    /// </summary>
+    private int _redirectFolderPath;
 
     /// <summary>
     /// The length of the item path of the redirect folder.
@@ -32,13 +43,13 @@ namespace Hi.UrlRewrite.Services
         // initialize folder path lazily
         if (_redirectFolderPath == 0)
         {
-          if (_rootItem.TemplateID.ToString() == Templates.Folders.RedirectFolderItem.TemplateId)
+          if (RootItem.TemplateID.ToString() == Templates.Folders.RedirectFolderItem.TemplateId)
           {
-            _redirectFolderPath = _rootItem.Paths.FullPath.Length;
+            _redirectFolderPath = RootItem.Paths.FullPath.Length;
           }
           else
           {
-            var redirectFolder = _rootItem.Axes.GetAncestors()
+            var redirectFolder = RootItem.Axes.GetAncestors()
               .First(x => x.TemplateID.ToString() == Templates.Folders.RedirectFolderItem.TemplateId);
             _redirectFolderPath = redirectFolder.Paths.FullPath.Length;
           }
@@ -48,17 +59,10 @@ namespace Hi.UrlRewrite.Services
       }
     }
 
-    private int _redirectFolderPath;
-
-    /// <summary>
-    /// The selected root item
-    /// </summary>
-    private readonly Item _rootItem;
-
     /// <summary>
     /// The export candidates. Check for validity before adding to this list.
     /// </summary>
-    private List<Item> _redirectsToExport = new List<Item>();
+    private List<Item> RedirectsToExport { get; set; } 
 
     /// <summary>
     /// Constructor
@@ -68,27 +72,29 @@ namespace Hi.UrlRewrite.Services
     public RedirectExportService(Database database, Item rootItem)
     {
       _db = database;
-      _rootItem = rootItem;
+      RootItem = rootItem;
+      ReportService = new ReportService();
+      RedirectsToExport = new List<Item>();
     }
 
     /// <summary>
     /// Export the redirects descending from the selected _rootItem
     /// </summary>
-    /// <param name="recursive">Whether to export all descendants or just immediate children</param>
+    /// <param name="exportAllDescendants">Whether to export all descendants or just immediate children</param>
     /// <param name="reportId">The out parameter for the report</param>
     /// <returns></returns>
-    public byte[] ExportRedirects(bool recursive, out ID reportId)
+    public byte[] ExportRedirects(bool exportAllDescendants, out ID reportId)
     {
       var exportedRedirects = new HashSet<RedirectCsvEntry>();
 
-      CreateExportCandidateList(recursive, _rootItem);
+      CreateExportCandidateList(exportAllDescendants, RootItem);
 
-      foreach (var redirect in _redirectsToExport)
+      foreach (var redirect in RedirectsToExport)
       {
         exportedRedirects.Add(CreateRedirectEntry(redirect));
       }
 
-      reportId = _reportService.WriteReport(_rootItem, "ExportReport");
+      reportId = ReportService.WriteReport(RootItem, "ExportReport");
 
       return CsvService.GenerateCsv(exportedRedirects);
     }
@@ -96,23 +102,38 @@ namespace Hi.UrlRewrite.Services
     /// <summary>
     /// Creates the list of all Items in the folder Item which are valid for export
     /// </summary>
-    /// <param name="recursive">Whether to export all descendants or just immediate children</param>
+    /// <param name="exportAllDescendants">Whether to export all descendants or just immediate children</param>
     /// <param name="currentFolderItem">The current folder item</param>
-    private void CreateExportCandidateList(bool recursive, Item currentFolderItem)
+    private void CreateExportCandidateList(bool exportAllDescendants, Item currentFolderItem)
+    {
+      AddImmediateChildrenToExport(currentFolderItem);
+
+      if (exportAllDescendants)
+        AddDescendantsToExport(currentFolderItem);
+    }
+
+    /// <summary>
+    /// Add immediate children of <see cref="currentFolderItem"/> to the export data.
+    /// </summary>
+    /// <param name="currentFolderItem">The current folder item</param>
+    private void AddImmediateChildrenToExport(Item currentFolderItem)
     {
       foreach (var exportableItem in currentFolderItem.Children
         .Where(IsExportableItem)
         .Where(HasCompleteData))
       {
-        _redirectsToExport.Add(exportableItem);
+        RedirectsToExport.Add(exportableItem);
       }
+    }
 
-      if (!recursive)
-      {
-        return;
-      }
-
-      foreach (var subfolder in currentFolderItem.Children.Where(x => x.TemplateID.ToString() == Templates.Folders.RedirectSubFolderItem.TemplateId))
+    /// <summary>
+    /// Add all relevant descendants of <see cref="currentFolderItem"/> to the export data.
+    /// </summary>
+    /// <param name="currentFolderItem">The current folder item.</param>
+    private void AddDescendantsToExport(Item currentFolderItem)
+    {
+      foreach (var subfolder in currentFolderItem.Children.Where(x =>
+        x.TemplateID.ToString() == Templates.Folders.RedirectSubFolderItem.TemplateId))
       {
         CreateExportCandidateList(true, subfolder);
       }
@@ -127,9 +148,7 @@ namespace Hi.UrlRewrite.Services
     {
       Assert.IsNotNull(item, "The item must not be null.");
 
-      var templateIdString = item.TemplateID.ToString();
-      return templateIdString == Templates.Inbound.SimpleRedirectItem.TemplateId ||
-             templateIdString == Templates.Inbound.ShortUrlItem.TemplateId;
+      return item.IsSimpleRedirectItem() || item.IsShortUrlItem();
     }
 
     /// <summary>
@@ -139,18 +158,13 @@ namespace Hi.UrlRewrite.Services
     /// <returns>True, if all required data are available</returns>
     private bool HasCompleteData(Item redirect)
     {
-      var templateIdString = redirect.TemplateID.ToString();
-      if (templateIdString == Templates.Inbound.SimpleRedirectItem.TemplateId)
-      {
+      if (redirect.IsSimpleRedirectItem())
         return HasSimpleRedirectCompleteData(redirect);
-      }
 
-      if (templateIdString == Templates.Inbound.ShortUrlItem.TemplateId)
-      {
+      if (redirect.IsShortUrlItem())
         return HasShortUrlCompleteData(redirect);
-      }
 
-      _reportService.AddWarning("The item has an invalid type and could not be exported.", redirect);
+      ReportService.AddWarning("The item has an invalid type and could not be exported.", redirect);
       return false;
     }
 
@@ -158,58 +172,53 @@ namespace Hi.UrlRewrite.Services
     /// Check if the data of the Short URL item is complete
     /// </summary>
     /// <param name="shortUrl">The Short URL item to check</param>
-    /// <returns>True, if all required data are available</returns>
+    /// <returns>>Returns <code>true</code>, if all required data are available.</returns>
     private bool HasShortUrlCompleteData(Item shortUrl)
     {
-      var hasInvalidData = shortUrl["Target"].IsNullOrEmpty() ||
-                           shortUrl["Short Url"].IsNullOrEmpty() ||
-                           shortUrl["Short Url Settings"].IsNullOrEmpty();
+      //CR: Könnten hier nicht direkt die Methoden der Klasse Hi.UrlRewrite.Templates.Inbound.ShortUrlItem verwendet werden? ShortUrlItem.ShortUrl oder ShortUrlItem.UrlSetting.
+      //    Oder die Klasse verfügt direkt über eine ShortUrlItem.HasNecessaryData (Dies betrifft natürlich auch andere Stellen, siehe HasSimpleRedirectCompleteData())
+      var hasValidData = shortUrl["Target"].HasValue() &&
+                         shortUrl["Short Url"].HasValue() &&
+                         shortUrl["Short Url Settings"].HasValue();
 
-      if (hasInvalidData)
-      {
-        _reportService.AddWarning("The Short URL has invalid data and was not exported.", shortUrl);
-      }
+      if (hasValidData) 
+        return true;
 
-      return !hasInvalidData;
+      ReportService.AddWarning("The Short URL has invalid data and was not exported.", shortUrl);
+      return false;
     }
 
     /// <summary>
     /// Check if the data of the Simple Redirect item is complete
     /// </summary>
     /// <param name="simpleRedirect">The Simple Redirect item to check</param>
-    /// <returns>True, if all required data are available.</returns>
+    /// <returns>Returns <code>true</code>, if all required data are available.</returns>
     private bool HasSimpleRedirectCompleteData(Item simpleRedirect)
     {
-      var hasInvalidData = simpleRedirect["Target"].IsNullOrEmpty() ||
-                           simpleRedirect["Path"].IsNullOrEmpty();
+      var hasValidData = simpleRedirect["Target"].HasValue() &&
+                           simpleRedirect["Path"].HasValue();
 
-      if (hasInvalidData)
-      {
-        _reportService.AddWarning("The Simple Redirect has invalid data and was not exported.", simpleRedirect);
-      }
+      if (hasValidData)
+        return true;
 
-      return !hasInvalidData;
+      ReportService.AddWarning("The Simple Redirect has invalid data and was not exported.", simpleRedirect);
+      return false;
     }
 
     /// <summary>
-    /// Create a CSV Model <see cref="RedirectCsvEntry"/> from an Item
+    /// Create a CSV Model <see cref="RedirectCsvEntry"/> from the specified <see cref="redirect"/> <see cref="Item"/>.
     /// </summary>
     /// <param name="redirect">The redirect item</param>
     /// <returns>The CSV Model</returns>
     private RedirectCsvEntry CreateRedirectEntry(Item redirect)
     {
-      var templateIdString = redirect.TemplateID.ToString();
-      if (templateIdString == Templates.Inbound.SimpleRedirectItem.TemplateId)
-      {
+      if (redirect.IsSimpleRedirectItem())
         return CreateSimpleRedirectEntry(redirect);
-      }
 
-      if (templateIdString == Templates.Inbound.ShortUrlItem.TemplateId)
-      {
+      if (redirect.IsShortUrlItem())
         return CreateShortUrlEntry(redirect);
-      }
 
-      _reportService.AddWarning("The item has an invalid type and was not exported.", redirect);
+      ReportService.AddWarning("The item has an invalid type and was not exported.", redirect);
       return null;
     }
 
