@@ -51,7 +51,7 @@ namespace Hi.UrlRewrite.Controllers
     /// <returns>True, if the id points to a RedirectFolderItem</returns>
     private static bool IsValidRootFolder(Item rootFolder)
     {
-      return rootFolder != null && rootFolder.TemplateID.ToString() == Templates.Folders.RedirectFolderItem.TemplateId;
+      return rootFolder != null && rootFolder.IsRedirectFolderItem();
     }
   }
 }

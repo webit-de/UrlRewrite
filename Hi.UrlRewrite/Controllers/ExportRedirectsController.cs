@@ -73,8 +73,7 @@ namespace Hi.UrlRewrite.Controllers
 
       var templateIdString = rootFolder.TemplateID.ToString();
 
-      return templateIdString == Templates.Folders.RedirectFolderItem.TemplateId ||
-             templateIdString == Templates.Folders.RedirectSubFolderItem.TemplateId;
+      return rootFolder.IsRedirectFolderItem() || rootFolder.IsRedirectSubFolderItem();
     }
 
     /// <summary>

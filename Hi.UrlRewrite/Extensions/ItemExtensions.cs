@@ -867,54 +867,60 @@ namespace Hi.UrlRewrite
 
         public static bool IsOutboundRuleItem(this Item item)
         {
-            return !IsTemplate(item) && item.TemplateID.ToString().Equals(OutboundRuleItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
+          return item.HasTemplate(OutboundRuleItem.TemplateId);
         }
 
         public static bool IsRedirectFolderItem(this Item item)
         {
-            return !IsTemplate(item) && item.TemplateID.ToString().Equals(RedirectFolderItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
+          return item.HasTemplate(RedirectFolderItem.TemplateId);
+        }
+
+        public static bool IsRedirectSubFolderItem(this Item item)
+        {
+          return item.HasTemplate(RedirectSubFolderItem.TemplateId);
         }
 
         public static bool IsSimpleRedirectItem(this Item item)
         {
-            return !IsTemplate(item) && item.TemplateID.ToString().Equals(SimpleRedirectItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
+          return item.HasTemplate(SimpleRedirectItem.TemplateId);
         }
 
         public static bool IsShortUrlItem(this Item item)
         {
-            return !IsTemplate(item) && item.TemplateID.ToString().Equals(ShortUrlItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
+          return item.HasTemplate(ShortUrlItem.TemplateId);
         }
 
         public static bool IsInboundRuleItem(this Item item)
         {
-            return !IsTemplate(item) && item.TemplateID.ToString().Equals(InboundRuleItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
+          return item.HasTemplate(InboundRuleItem.TemplateId);
         }
 
-	    public static bool IsInboundRuleItemChild(this Item item)
-	    {
-		    return IsInboundRuleItemChild(item, null);
-	    }
+        public static bool IsInboundRuleItemChild(this Item item)
+	      {
+		      return IsInboundRuleItemChild(item, null);
+	      }
 
-	    public static bool IsInboundRuleItemChild(this Item item, ID parentId)
+	      public static bool IsInboundRuleItemChild(this Item item, ID parentId)
         {
 	        Item itemParent = item.Parent;
-            if (item.Parent == null && parentId != (ID)null)
-            {
-	            itemParent = item.Database.GetItem(parentId);
-            }
+          if (item.Parent == null && parentId != (ID)null)
+          {
+	          itemParent = item.Database.GetItem(parentId);
+          }
 
 	        if (itemParent != null)
 	        {
-				return !IsTemplate(item) && itemParent.TemplateID.ToString().Equals(InboundRuleItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
-			}
-            return false;
+				    return itemParent.IsInboundRuleItem();
+			    }
+
+          return false;
         }
 
         public static bool IsOutboundRuleItemChild(this Item item)
         {
             if (item.Parent != null)
             {
-                return !IsTemplate(item) && item.Parent.TemplateID.ToString().Equals(OutboundRuleItem.TemplateId, StringComparison.InvariantCultureIgnoreCase);
+              return item.Parent.IsOutboundRuleItem();
             }
             return false;
         }
@@ -931,7 +937,23 @@ namespace Hi.UrlRewrite
                        new ID(NoneItem.TemplateId)
                    }).Any(e => e.Equals(item.TemplateID));
         }
+    
+        /// <summary>
+        /// Determines if the specified <see cref="Item"/> is based on the specified template id.
+        /// </summary>
+        /// <param name="item">The item used as base for comparison.</param>
+        /// <param name="templateId">Target template id.</param>
+        /// <returns>Returns <code>true</code> if the template of the <see cref="Item"/> equals the specified template id; otherwise <code>false</code>.</returns>
+        private static bool HasTemplate(this Item item, string templateId)
+        {
+          return !IsTemplate(item) &&
+                 item.TemplateID.ToString().Equals(templateId, StringComparison.InvariantCultureIgnoreCase);
+        }
 
+        /// <summary>
+        /// Determines if the <see cref="Item"/> is a template item or not.
+        /// </summary>
+        /// <returns>Returns <code>true</code> if the <see cref="Item"/> path contains <code>/sitecore/templates</code>; otherwise <code>false</code>.</returns>
         public static bool IsTemplate(this Item item)
         {
             return item.Paths.FullPath.StartsWith("/sitecore/templates", StringComparison.InvariantCultureIgnoreCase);
