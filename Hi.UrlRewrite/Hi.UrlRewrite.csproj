@@ -181,6 +181,7 @@
     <Compile Include="Entities\ServerVariables\ResponseHeader.cs" />
     <Compile Include="Entities\ServerVariables\ServerVariable.cs" />
     <Compile Include="Extensions\ItemExtensions.cs" />
+    <Compile Include="Extensions\StringExtension.cs" />
     <Compile Include="Fields\ShortUrl.cs" />
     <Compile Include="Fields\SiteDropList.cs" />
     <Compile Include="Helpers\ShortUrlHelpers.cs" />
