@@ -179,7 +179,7 @@ namespace Hi.UrlRewrite.Services
     /// <param name="shortUrl">The Short URL item</param>
     private void PopulateShortUrl(RedirectCsvEntry data, Item shortUrl)
     {
-      var token = GetToken(data);
+      var token = GetToken(data, shortUrl);
 
       shortUrl.Editing.BeginEdit();
       shortUrl["Short Url"] = token;
@@ -292,12 +292,13 @@ namespace Hi.UrlRewrite.Services
     /// Get the Short URL token
     /// </summary>
     /// <param name="redirect">The redirect item</param>
+    /// <param name="createdItem">The created item</param>
     /// <returns>The Short URL token if it's unique, otherwise an empty string</returns>
-    private string GetToken(RedirectCsvEntry redirect)
+    private string GetToken(RedirectCsvEntry redirect, Item createdItem)
     {
       // do NOT use caching here!
       var query = "/sitecore/content//*[@@templateid='" + Templates.Inbound.ShortUrlItem.TemplateId + "']";
-      var isTokenUnique = _db.SelectItems(query).All(x => x["Short Url"] != redirect.RedirectedUrl);
+      var isTokenUnique = _db.SelectItems(query).Where(x => x.ID != createdItem.ID).All(x => x["Short Url"] != redirect.RedirectedUrl);
 
       if (isTokenUnique)
       {
