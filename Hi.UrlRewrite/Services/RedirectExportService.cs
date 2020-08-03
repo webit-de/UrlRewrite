@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Hi.UrlRewrite.Extensions;
 using Hi.UrlRewrite.Models;
 using Sitecore.Data;
 using Sitecore.Data.Items;
 using Sitecore.Diagnostics;
-using Sitecore.StringExtensions;
 
 namespace Hi.UrlRewrite.Services
 {
@@ -62,7 +60,7 @@ namespace Hi.UrlRewrite.Services
     /// <summary>
     /// The export candidates. Check for validity before adding to this list.
     /// </summary>
-    private List<Item> RedirectsToExport { get; set; } 
+    private List<Item> RedirectsToExport { get; set; }
 
     /// <summary>
     /// Constructor
@@ -98,7 +96,7 @@ namespace Hi.UrlRewrite.Services
 
       return CsvService.GenerateCsv(exportedRedirects);
     }
-    
+
     /// <summary>
     /// Creates the list of all Items in the folder Item which are valid for export
     /// </summary>
@@ -175,13 +173,11 @@ namespace Hi.UrlRewrite.Services
     /// <returns>>Returns <code>true</code>, if all required data are available.</returns>
     private bool HasShortUrlCompleteData(Item shortUrl)
     {
-      //CR: Könnten hier nicht direkt die Methoden der Klasse Hi.UrlRewrite.Templates.Inbound.ShortUrlItem verwendet werden? ShortUrlItem.ShortUrl oder ShortUrlItem.UrlSetting.
-      //    Oder die Klasse verfügt direkt über eine ShortUrlItem.HasNecessaryData (Dies betrifft natürlich auch andere Stellen, siehe HasSimpleRedirectCompleteData())
       var hasValidData = shortUrl["Target"].HasValue() &&
                          shortUrl["Short Url"].HasValue() &&
                          shortUrl["Short Url Settings"].HasValue();
 
-      if (hasValidData) 
+      if (hasValidData)
         return true;
 
       ReportService.AddWarning("The Short URL has invalid data and was not exported.", shortUrl);

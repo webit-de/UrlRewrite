@@ -380,11 +380,10 @@ namespace Hi.UrlRewrite.Services
 
       switch (redirectType)
       {
-        // CR: Prüfen ob hier die Template Typen vertauscht wurden.
-        case Constants.RedirectType.SHORTURL:
+        case Constants.RedirectType.SIMPLEREDIRECT:
           return CheckExistingItemTemplateType(Templates.Inbound.SimpleRedirectItem.TemplateId);
 
-        case Constants.RedirectType.SIMPLEREDIRECT:
+        case Constants.RedirectType.SHORTURL:
           return CheckExistingItemTemplateType(Templates.Inbound.ShortUrlItem.TemplateId);
 
         default:
