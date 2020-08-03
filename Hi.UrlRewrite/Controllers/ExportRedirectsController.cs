@@ -35,7 +35,8 @@ namespace Hi.UrlRewrite.Controllers
       // in an api call, return the csv
       if (isApiCall)
       {
-        return Content(csv.ToString(), "text/csv");
+        var csvStream = new MemoryStream(csv);
+        return File(csvStream, "text/csv", FileService.GetFileName(rootFolder));
       }
 
       var resultIds = GetResultsAsJson(csv, db, rootFolder, reportId.ToString());
