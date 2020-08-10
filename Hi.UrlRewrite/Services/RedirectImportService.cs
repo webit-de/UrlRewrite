@@ -64,7 +64,7 @@ namespace Hi.UrlRewrite.Services
         throw;
       }
     }
-    
+
     /// <summary>
     /// Process a single Redirect CSV Model
     /// </summary>
@@ -72,14 +72,15 @@ namespace Hi.UrlRewrite.Services
     /// <param name="rootItem">The root item</param>
     private void ProcessRedirect(RedirectCsvEntry redirect, Item rootItem)
     {
+      // if DELETE status is set, delete the item
+      if (redirect.Status.ToUpper() == Constants.ImportStatus.DELETE.ToString())
+      {
+        DeleteRedirect(redirect);
+        return;
+      }
+
       if (RedirectDataIsValid(redirect, out var existingRedirect))
       {
-        // if DELETE status is set, delete the item
-        if (redirect.Status.ToUpper() == Constants.ImportStatus.DELETE.ToString())
-        {
-          DeleteRedirect(redirect);
-          return;
-        }
 
         // update redirect or create a new one
         Enum.TryParse(redirect.Type, true, out Constants.RedirectType typeEnum);
@@ -172,7 +173,7 @@ namespace Hi.UrlRewrite.Services
         }
       }
     }
-    
+
     /// <summary>
     /// Populate the a Short URL item with the provided data
     /// </summary>
@@ -394,7 +395,7 @@ namespace Hi.UrlRewrite.Services
           return false;
       }
     }
-    
+
     /// <summary>
     /// Check if a mandatory field is empty.
     /// </summary>
