@@ -143,6 +143,7 @@ namespace Hi.UrlRewrite.Services
       var path = GetRedirectedPath(data, simpleRedirect);
 
       simpleRedirect.Editing.BeginEdit();
+      simpleRedirect.Name = data.ItemName;
       simpleRedirect["Path"] = path;
       simpleRedirect["Target"] = GetRedirectTarget(data);
       // if the path is empty, disable the redirect regardless of status field to avoid ambiguous paths.
@@ -182,6 +183,7 @@ namespace Hi.UrlRewrite.Services
       var token = GetToken(data, shortUrl);
 
       shortUrl.Editing.BeginEdit();
+      shortUrl.Name = data.ItemName;
       shortUrl["Short Url"] = token;
       shortUrl["Target"] = GetRedirectTarget(data);
       // if the token is empty, disable the redirect regardless of status field to avoid ambiguous paths.
