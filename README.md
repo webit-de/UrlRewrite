@@ -15,6 +15,10 @@ Changelog
 Version 1.9
 * Added support for Sitecore 9
 
+Version 1.8.4
+* Added Import and Export functionality for Simple Redirect and Short URLs (disabled by default)
+  * To enable this, enable the `App_Config\Include\Hi.UrlRewrite.RegisterCustomRoutes.config.disabled` file.
+
 Varsion 1.8.2 - https://github.com/iamandycohen/UrlRewrite/releases/tag/v1.8.2
 * Added support for Sitecore 8.2
 
