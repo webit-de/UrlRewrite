@@ -1,9 +1,9 @@
 <project>
   <Metadata>
     <metadata>
-      <PackageName>URL Rewrite</PackageName>
+      <PackageName>URL_Rewrite</PackageName>
       <Author>Adapted for Sitecore 9 by David Boeser, originally by Andy Cohen, Changes from webit!</Author>
-      <Version>1.8.4</Version>
+      <Version>1.9.0.1</Version>
       <Revision />
       <License />
       <Comment />
@@ -54,6 +54,8 @@
         <x-item>/App_Config/Include/Hi.UrlRewrite.Commands.config</x-item>
         <x-item>/bin/CsvHelper.dll</x-item>
         <x-item>/App_Config/Include/Hi.UrlRewrite.RegisterCustomRoutes.config.disabled</x-item>
+        <x-item>/bin/Microsoft.Bcl.AsyncInterfaces.dll</x-item>
+        <x-item>/bin/System.Threading.Tasks.Extensions.dll</x-item>
       </Entries>
       <Converter>
         <FileToEntryConverter>

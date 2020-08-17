@@ -12,15 +12,15 @@ Sitecore Support: "Creation of custom segments is not supported by the Experienc
 Changelog
 =========
 
-Version 1.9
-* Added support for Sitecore 9
-
-Version 1.8.4
+Version 1.9.0.1
 * Added new redirect item type `Short Url`
   * `Short Url` redirects generate a short url for a redirect target, according to the configured settings.
   * `Short Urls` are using tokens consisting of alphanumeric characters (without ambiguous characters, like l and I or O and 0)
 * Added Import and Export functionality for `Simple Redirect` and `Short URLs` (disabled by default)
   * To enable this, enable the `App_Config\Include\Hi.UrlRewrite.RegisterCustomRoutes.config.disabled` file.
+
+Version 1.9
+* Added support for Sitecore 9
 
 Version 1.8.2 - https://github.com/iamandycohen/UrlRewrite/releases/tag/v1.8.2
 * Added support for Sitecore 8.2
