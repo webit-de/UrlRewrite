@@ -3,6 +3,7 @@ using System.Linq;
 using Hi.UrlRewrite.Extensions;
 using Hi.UrlRewrite.Models;
 using Sitecore.Data;
+using Sitecore.Data.Fields;
 using Sitecore.Data.Items;
 using Sitecore.Diagnostics;
 
@@ -228,6 +229,7 @@ namespace Hi.UrlRewrite.Services
     {
       return new RedirectCsvEntry()
       {
+        TargetUrl = GetUrl(simpleRedirect),
         ItemId = simpleRedirect.ID.ToString(),
         ItemName = simpleRedirect.Name,
         RelativeItemPath = GetRelativePath(simpleRedirect),
@@ -249,6 +251,7 @@ namespace Hi.UrlRewrite.Services
     {
       return new RedirectCsvEntry()
       {
+        TargetUrl = GetUrl(shortUrl),
         ItemId = shortUrl.ID.ToString(),
         ItemName = shortUrl.Name,
         RelativeItemPath = GetRelativePath(shortUrl),
@@ -291,6 +294,30 @@ namespace Hi.UrlRewrite.Services
     private string GetRelativePath(Item redirect)
     {
       return redirect.Paths.ParentPath.Remove(0, RedirectFolderPathLength);
+    }
+
+    /// <summary>
+    /// Get the URL to the redirect Item
+    /// </summary>
+    /// <param name="redirect">The redirect item</param>
+    /// <returns></returns>
+    private static string GetUrl(Item redirect)
+    {
+      LinkField linkField = redirect.Fields["Target"];
+      var targetItem = linkField?.TargetItem;
+
+      if (targetItem != null && linkField.IsInternal)
+      {
+        var urlOptions = new Sitecore.Links.UrlOptions
+        {
+          AlwaysIncludeServerUrl = true
+        };
+
+        // add a space to indicate the end of the url for url highlighting in text editors
+        return Sitecore.Links.LinkManager.GetItemUrl(targetItem, urlOptions) + " ";
+      }
+
+      return string.Empty;
     }
   }
 }
