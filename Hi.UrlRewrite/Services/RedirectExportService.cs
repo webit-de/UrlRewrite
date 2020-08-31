@@ -6,6 +6,7 @@ using Sitecore.Data;
 using Sitecore.Data.Fields;
 using Sitecore.Data.Items;
 using Sitecore.Diagnostics;
+using Sitecore.StringExtensions;
 
 namespace Hi.UrlRewrite.Services
 {
@@ -304,20 +305,52 @@ namespace Hi.UrlRewrite.Services
     private static string GetUrl(Item redirect)
     {
       LinkField linkField = redirect.Fields["Target"];
-      var targetItem = linkField?.TargetItem;
 
-      if (targetItem != null && linkField.IsInternal)
+      if (linkField.IsInternal)
       {
-        var urlOptions = new Sitecore.Links.UrlOptions
-        {
-          AlwaysIncludeServerUrl = true
-        };
+        return GetInternalUrl(linkField);
+      }
 
+      return GetExternalUrl(linkField);
+    }
+
+    /// <summary>
+    /// Get the external Url form a link field
+    /// </summary>
+    /// <param name="linkField">The link field</param>
+    /// <returns>The external url</returns>
+    private static string GetExternalUrl(LinkField linkField)
+    {
+      if (linkField != null && linkField.Url.HasValue())
+      {
         // add a space to indicate the end of the url for url highlighting in text editors
-        return Sitecore.Links.LinkManager.GetItemUrl(targetItem, urlOptions) + " ";
+        return linkField.Url + " ";
       }
 
       return string.Empty;
+    }
+
+    /// <summary>
+    /// Get the internal Url form a link field
+    /// </summary>
+    /// <param name="linkField">The link field</param>
+    /// <returns>The internal url</returns>
+    private static string GetInternalUrl(LinkField linkField)
+    {
+      var targetItem = linkField?.TargetItem;
+
+      if (targetItem == null)
+      {
+        return string.Empty;
+      }
+
+      var urlOptions = new Sitecore.Links.UrlOptions
+      {
+        AlwaysIncludeServerUrl = true
+      };
+
+      // add a space to indicate the end of the url for url highlighting in text editors
+      return Sitecore.Links.LinkManager.GetItemUrl(targetItem, urlOptions) + " ";
     }
   }
 }
