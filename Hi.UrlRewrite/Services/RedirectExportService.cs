@@ -230,7 +230,7 @@ namespace Hi.UrlRewrite.Services
     {
       return new RedirectCsvEntry()
       {
-        TargetUrl = GetUrl(simpleRedirect),
+        RedirectTargetUrl = GetUrl(simpleRedirect),
         ItemId = simpleRedirect.ID.ToString(),
         ItemName = simpleRedirect.Name,
         RelativeItemPath = GetRelativePath(simpleRedirect),
@@ -252,7 +252,7 @@ namespace Hi.UrlRewrite.Services
     {
       return new RedirectCsvEntry()
       {
-        TargetUrl = GetUrl(shortUrl),
+        RedirectTargetUrl = GetUrl(shortUrl),
         ItemId = shortUrl.ID.ToString(),
         ItemName = shortUrl.Name,
         RelativeItemPath = GetRelativePath(shortUrl),
@@ -350,7 +350,7 @@ namespace Hi.UrlRewrite.Services
       };
 
       // add a space to indicate the end of the url for url highlighting in text editors
-      return Sitecore.Links.LinkManager.GetItemUrl(targetItem, urlOptions) + " ";
+      return Sitecore.Links.LinkManager.GetItemUrl(targetItem, urlOptions).Replace(" ", "-") + " ";
     }
   }
 }

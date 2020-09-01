@@ -8,8 +8,6 @@ namespace Hi.UrlRewrite.Models
   /// </summary>
   public class RedirectCsvEntry : ICsvModel
   {
-    [Name("TargetUrl")]
-    public string TargetUrl { get; set; }
     [Name("RedirectedUrl")]
     public string RedirectedUrl { get; set; }
     [Name("ItemName")]
@@ -26,5 +24,7 @@ namespace Hi.UrlRewrite.Models
     public string RedirectTarget { get; set; }
     [Name("ItemId")]
     public string ItemId { get; set; }
+    [Name("RedirectTargetUrl")]
+    public string RedirectTargetUrl { get; set; }
   }
 }
