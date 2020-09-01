@@ -344,13 +344,11 @@ namespace Hi.UrlRewrite.Services
         return string.Empty;
       }
 
-      var urlOptions = new Sitecore.Links.UrlOptions
-      {
-        AlwaysIncludeServerUrl = true
-      };
+      var urlOptions = Sitecore.Links.UrlOptions.DefaultOptions;
+      urlOptions.AlwaysIncludeServerUrl = true;
 
       // add a space to indicate the end of the url for url highlighting in text editors
-      return Sitecore.Links.LinkManager.GetItemUrl(targetItem, urlOptions).Replace(" ", "-") + " ";
+      return Sitecore.Links.LinkManager.GetItemUrl(targetItem, urlOptions) + " ";
     }
   }
 }
