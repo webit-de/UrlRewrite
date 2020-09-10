@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Web;
+using Sitecore.Globalization;
 
 namespace Hi.UrlRewrite.Processing
 {
@@ -18,6 +19,7 @@ namespace Hi.UrlRewrite.Processing
         public override void Process(HttpRequestArgs args)
         {
             var db = Sitecore.Context.Database;
+            var language = Sitecore.Context.Language;
 
             try
             {
@@ -33,7 +35,7 @@ namespace Hi.UrlRewrite.Processing
                 }
                 
                 var urlRewriter = new InboundRewriter(httpContext.Request.ServerVariables, httpContext.Request.Headers);
-                var requestResult = ProcessUri(requestUri, db, urlRewriter);
+                var requestResult = ProcessUri(requestUri, db, language, urlRewriter);
 
                 if (requestResult == null || !requestResult.MatchedAtLeastOneRule) return;
 
@@ -64,9 +66,9 @@ namespace Hi.UrlRewrite.Processing
             }
         }
 
-        internal ProcessInboundRulesResult ProcessUri(Uri requestUri, Database db, InboundRewriter urlRewriter)
+        internal ProcessInboundRulesResult ProcessUri(Uri requestUri, Database db, Language language, InboundRewriter urlRewriter)
         {
-            var inboundRules = GetInboundRules(db);
+            var inboundRules = GetInboundRules(db, language);
 
             if (inboundRules == null)
             {
@@ -76,9 +78,9 @@ namespace Hi.UrlRewrite.Processing
             return urlRewriter.ProcessRequestUrl(requestUri, inboundRules);
         }
 
-        private List<InboundRule> GetInboundRules(Database db)
+        private List<InboundRule> GetInboundRules(Database db, Language language)
         {
-            var cache = RulesCacheManager.GetCache(db);
+            var cache = RulesCacheManager.GetCache(db, language);
             var inboundRules = cache.GetInboundRules();
 
             if (inboundRules != null) return inboundRules;
@@ -87,7 +89,7 @@ namespace Hi.UrlRewrite.Processing
 
             using (new SecurityDisabler())
             {
-                var rulesEngine = new RulesEngine(db);
+                var rulesEngine = new RulesEngine(db, language);
                 inboundRules = rulesEngine.GetCachedInboundRules();
             }
 

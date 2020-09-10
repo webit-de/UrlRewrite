@@ -5,6 +5,7 @@ using System.Linq;
 using System.Web;
 using Hi.UrlRewrite.Processing.Results;
 using Sitecore.Data;
+using Sitecore.Globalization;
 using Sitecore.Sites;
 
 namespace Hi.UrlRewrite.Processing
@@ -12,11 +13,11 @@ namespace Hi.UrlRewrite.Processing
     public class InboundRulesHelper
     {
 
-        public ProcessInboundRulesResult GetUrlResults(string url, Database database, NameValueCollection serverVariables = null)
+        public ProcessInboundRulesResult GetUrlResults(string url, Database database, Language language, NameValueCollection serverVariables = null)
         {
             var rewriter = new InboundRewriter();
 
-            var rulesEngine = new RulesEngine(database);
+            var rulesEngine = new RulesEngine(database, language);
             var inboundRules = rulesEngine.GetInboundRules();
 
             var requestUri = new Uri(url);

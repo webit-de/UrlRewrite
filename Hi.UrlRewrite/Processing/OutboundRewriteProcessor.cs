@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using Sitecore.Data;
+using Sitecore.Data.Managers;
+using Sitecore.Globalization;
 using Sitecore.SecurityModel;
 
 namespace Hi.UrlRewrite.Processing
@@ -30,9 +32,10 @@ namespace Hi.UrlRewrite.Processing
             if (siteContext == null) return;
 
             var db = siteContext.Database;
-            if (db == null) return;
+            var language = LanguageManager.GetLanguage(siteContext.Language);
+            if (db == null || language == null) return;
 
-            var outboundRules = GetOutboundRules(db);
+            var outboundRules = GetOutboundRules(db, language);
             var rewriter = new OutboundRewriter();
 
             // check preconditions
@@ -41,9 +44,9 @@ namespace Hi.UrlRewrite.Processing
             transformer.SetupResponseFilter();
         }
 
-        private List<OutboundRule> GetOutboundRules(Database db)
+        private List<OutboundRule> GetOutboundRules(Database db, Language language)
         {
-            var cache = RulesCacheManager.GetCache(db);
+            var cache = RulesCacheManager.GetCache(db, language);
             var outboundRules = cache.GetOutboundRules();
 
             if (outboundRules != null) return outboundRules;
@@ -52,7 +55,7 @@ namespace Hi.UrlRewrite.Processing
 
             using (new SecurityDisabler())
             {
-                var rulesEngine = new RulesEngine(db);
+                var rulesEngine = new RulesEngine(db, language);
                 outboundRules = rulesEngine.GetCachedOutboundRules();
             }
 

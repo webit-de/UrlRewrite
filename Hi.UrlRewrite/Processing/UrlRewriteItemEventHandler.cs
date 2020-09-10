@@ -1,6 +1,5 @@
 ﻿using Hi.UrlRewrite.Templates.Folders;
 using Hi.UrlRewrite.Templates.Inbound;
-using Sitecore;
 using Sitecore.Data;
 using Sitecore.Data.Events;
 using Sitecore.Data.Items;
@@ -52,7 +51,8 @@ namespace Hi.UrlRewrite.Processing
     private void RunItemSaved(Item item, ItemChanges itemChanges)
     {
       var db = item.Database;
-      var rulesEngine = new RulesEngine(db);
+      var language = item.Language;
+      var rulesEngine = new RulesEngine(db, language);
 
       try
       {
@@ -90,7 +90,6 @@ namespace Hi.UrlRewrite.Processing
                 item.Paths.FullPath);
 
               rulesEngine.ClearInboundRuleCache();
-              ;
             }
           }
           else if (item.IsInboundRuleItem())
@@ -106,7 +105,7 @@ namespace Hi.UrlRewrite.Processing
               Log.Info(this, db,
                 "Inbound Rule [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
                 item.Paths.FullPath);
-
+                
               rulesEngine.ClearInboundRuleCache();
             }
           }
@@ -187,7 +186,7 @@ namespace Hi.UrlRewrite.Processing
     private void RunItemDeleted(Item item, ID formerParentId)
     {
 
-      var rulesEngine = new RulesEngine(item.Database);
+      var rulesEngine = new RulesEngine(item.Database, item.Language);
 
       try
       {
