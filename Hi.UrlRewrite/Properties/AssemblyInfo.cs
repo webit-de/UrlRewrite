@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
@@ -7,11 +6,11 @@ using System.Runtime.InteropServices;
 // associated with an assembly.
 [assembly: AssemblyTitle("Hi.UrlRewrite")]
 [assembly: AssemblyDescription("Url Rewrite for Sitecore")]
-[assembly: AssemblyInformationalVersion("v1.8.2")]
+[assembly: AssemblyInformationalVersion("v1.9.1")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Url Rewrite")]
-[assembly: AssemblyCopyright("Copyright © Andy Cohen 2016")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,4 +31,4 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("1.8.2")]
+[assembly: AssemblyVersion("1.9.1")]
