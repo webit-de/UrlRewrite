@@ -1,4 +1,4 @@
-
+﻿
 namespace Hi.UrlRewrite
 {
     public static class Constants
@@ -58,11 +58,15 @@ namespace Hi.UrlRewrite
         public const string ShortUrl_FieldId = "{410EAE33-FD47-415C-AFDC-61DEA4BEAF8F}";
         public const string ShortUrlTarget_FieldId = "{7ACDD68F-CBEA-41D2-818D-BC777CD5D799}";
 
+        /// <summary>
+        /// The setting name for the host name of the cd server
+        /// </summary>
+        public const string ContentDeliveryHostNameSetting = "cdHostName";
 
         /// <summary>
         /// The path for storing import / export reports
         /// </summary>
-        public static readonly string ReportPath = "/sitecore/media library/Files/Url Rewrite/Reports/";
+    public static readonly string ReportPath = "/sitecore/media library/Files/Url Rewrite/Reports/";
 
         /// <summary>
         /// The path for storing exported csv files

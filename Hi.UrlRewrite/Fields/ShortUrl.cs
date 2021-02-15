@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Web.UI;
+using Hi.UrlRewrite.Extensions;
 using Hi.UrlRewrite.Templates.Inbound;
 using Sitecore.Configuration;
 using Sitecore.Diagnostics;
@@ -19,7 +20,7 @@ namespace Hi.UrlRewrite.Fields
     {
       // display the full url instead of only the token
       var owningItem = new ShortUrlItem(Sitecore.Data.Database.GetDatabase("master").GetItem(ItemID));
-      
+
       string valueString;
 
       // only display a value, if a token is assigned
@@ -55,8 +56,11 @@ namespace Hi.UrlRewrite.Fields
     string GetHostname(Sitecore.Data.Items.Item item)
     {
       var siteInfos = Factory.GetSiteInfoList().Where(x => x.RootPath.ToLower().StartsWith("/sitecore/content/"));
+      var itemSiteInfo = siteInfos?.FirstOrDefault(x => item.Paths.FullPath.StartsWith(x.ContentStartItem));
+      var siteContext = Factory.GetSite(itemSiteInfo?.Name);
+      var cdHostName = siteContext?.Properties[Constants.ContentDeliveryHostNameSetting];
 
-      return siteInfos?.FirstOrDefault(x => item.Paths.FullPath.StartsWith(x.ContentStartItem))?.TargetHostName;
+      return cdHostName.HasValue() ? cdHostName : itemSiteInfo?.TargetHostName;
 
     }
   }
