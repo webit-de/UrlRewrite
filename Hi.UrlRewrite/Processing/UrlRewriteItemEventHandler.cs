@@ -6,6 +6,7 @@ using Sitecore.Data.Items;
 using Sitecore.Events;
 using Sitecore.SecurityModel;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Hi.UrlRewrite.Processing
@@ -51,122 +52,127 @@ namespace Hi.UrlRewrite.Processing
     private void RunItemSaved(Item item, ItemChanges itemChanges)
     {
       var db = item.Database;
-      var language = item.Language;
-      var rulesEngine = new RulesEngine(db, language);
-
-      try
+      var rulesEngines = new List<RulesEngine>();
+      foreach (var language in db.Languages)
       {
-        using (new SecurityDisabler())
+        rulesEngines.Add(new RulesEngine(db, language));
+      }
+
+      foreach (var rulesEngine in rulesEngines)
+      {
+        try
         {
-          var redirectFolderItem = GetRedirectFolderItem(item);
-
-          if (redirectFolderItem == null) return;
-
-          if (item.IsRedirectFolderItem())
+          using (new SecurityDisabler())
           {
-            Log.Info(this, db, "Clearing cached inbound rules (reason: Redirect Folder [{0}] saves)",
-              item.Paths.FullPath);
+            var redirectFolderItem = GetRedirectFolderItem(item);
 
-            rulesEngine.ClearInboundRuleCache();
-          }
-          else if (item.IsOutboundRuleItem())
-          {
-            Log.Info(this, db, "Refreshing Outbound Rule [{0}] after save event", item.Paths.FullPath);
+            if (redirectFolderItem == null) return;
 
-            rulesEngine.RefreshRule(item, redirectFolderItem);
-          }
-          else if (item.IsSimpleRedirectItem())
-          {
-            if (rulesEngine.CanRefreshInboundRule(item, redirectFolderItem))
+            if (item.IsRedirectFolderItem())
             {
-              Log.Info(this, db, "Refreshing Simple Redirect [{0}] after save event", item.Paths.FullPath);
-
-              rulesEngine.RefreshRule(item, redirectFolderItem);
-            }
-            else
-            {
-              Log.Info(this, db,
-                "Simple Redirect [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
+              Log.Info(this, db, "Clearing cached inbound rules (reason: Redirect Folder [{0}] saves)",
                 item.Paths.FullPath);
 
               rulesEngine.ClearInboundRuleCache();
             }
-          }
-          else if (item.IsShortUrlItem())
-          {
-            if (rulesEngine.CanRefreshInboundRule(item, redirectFolderItem))
+            else if (item.IsOutboundRuleItem())
             {
-              Log.Info(this, db, "Refreshing Short Url [{0}] after save event", item.Paths.FullPath);
+              Log.Info(this, db, "Refreshing Outbound Rule [{0}] after save event", item.Paths.FullPath);
 
               rulesEngine.RefreshRule(item, redirectFolderItem);
             }
-            else
+            else if (item.IsSimpleRedirectItem())
             {
-              Log.Info(this, db,
-                "Short Url [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
-                item.Paths.FullPath);
+              if (rulesEngine.CanRefreshInboundRule(item, redirectFolderItem))
+              {
+                Log.Info(this, db, "Refreshing Simple Redirect [{0}] after save event", item.Paths.FullPath);
 
-              rulesEngine.ClearInboundRuleCache();
-            }
-          }
-          else if (item.IsInboundRuleItem())
-          {
-            if (rulesEngine.CanRefreshInboundRule(item, redirectFolderItem))
-            {
-              Log.Info(this, db, "Refreshing Inbound Rule [{0}] after save event", item.Paths.FullPath);
+                rulesEngine.RefreshRule(item, redirectFolderItem);
+              }
+              else
+              {
+                Log.Info(this, db,
+                  "Simple Redirect [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
+                  item.Paths.FullPath);
 
-              rulesEngine.RefreshRule(item, redirectFolderItem);
+                rulesEngine.ClearInboundRuleCache();
+              }
             }
-            else
+            else if (item.IsShortUrlItem())
             {
-              Log.Info(this, db,
-                "Inbound Rule [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
-                item.Paths.FullPath);
-                
-              rulesEngine.ClearInboundRuleCache();
-            }
-          }
-          else if (item.IsRedirectType() && item.IsInboundRuleItemChild() &&
-                   db.Name.Equals("master", StringComparison.CurrentCultureIgnoreCase))
-          {
-            var inboundRuleItem = item.Parent;
-            var inboundRule = new InboundRuleItem(inboundRuleItem);
+              if (rulesEngine.CanRefreshInboundRule(item, redirectFolderItem))
+              {
+                Log.Info(this, db, "Refreshing Short Url [{0}] after save event", item.Paths.FullPath);
 
-            inboundRule.BeginEdit();
-            inboundRule.Action.InnerField.SetValue(item.ID.ToString(), false);
-            inboundRule.EndEdit();
-          }
-          else if (item.IsInboundRuleItemChild())
-          {
-            if (rulesEngine.CanRefreshInboundRule(item.Parent, redirectFolderItem))
+                rulesEngine.RefreshRule(item, redirectFolderItem);
+              }
+              else
+              {
+                Log.Info(this, db,
+                  "Short Url [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
+                  item.Paths.FullPath);
+
+                rulesEngine.ClearInboundRuleCache();
+              }
+            }
+            else if (item.IsInboundRuleItem())
             {
-              Log.Info(this, db, "Refreshing Inbound Rule [{0}] after save event", item.Parent.Paths.FullPath);
+              if (rulesEngine.CanRefreshInboundRule(item, redirectFolderItem))
+              {
+                Log.Info(this, db, "Refreshing Inbound Rule [{0}] after save event", item.Paths.FullPath);
+
+                rulesEngine.RefreshRule(item, redirectFolderItem);
+              }
+              else
+              {
+                Log.Info(this, db,
+                  "Inbound Rule [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
+                  item.Paths.FullPath);
+
+                rulesEngine.ClearInboundRuleCache();
+              }
+            }
+            else if (item.IsRedirectType() && item.IsInboundRuleItemChild() &&
+                     db.Name.Equals("master", StringComparison.CurrentCultureIgnoreCase))
+            {
+              var inboundRuleItem = item.Parent;
+              var inboundRule = new InboundRuleItem(inboundRuleItem);
+
+              inboundRule.BeginEdit();
+              inboundRule.Action.InnerField.SetValue(item.ID.ToString(), false);
+              inboundRule.EndEdit();
+            }
+            else if (item.IsInboundRuleItemChild())
+            {
+              if (rulesEngine.CanRefreshInboundRule(item.Parent, redirectFolderItem))
+              {
+                Log.Info(this, db, "Refreshing Inbound Rule [{0}] after save event", item.Parent.Paths.FullPath);
+
+                rulesEngine.RefreshRule(item.Parent, redirectFolderItem);
+              }
+              else
+              {
+                Log.Info(this, db,
+                  "Inbound Rule [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
+                  item.Parent.Paths.FullPath);
+
+                rulesEngine.ClearInboundRuleCache();
+              }
+            }
+            else if (item.IsOutboundRuleItemChild())
+            {
+              Log.Info(this, db, "Refreshing Outbound Rule [{0}] after save event", item.Parent.Paths.FullPath);
 
               rulesEngine.RefreshRule(item.Parent, redirectFolderItem);
             }
-            else
-            {
-              Log.Info(this, db,
-                "Inbound Rule [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
-                item.Parent.Paths.FullPath);
-
-              rulesEngine.ClearInboundRuleCache();
-            }
-          }
-          else if (item.IsOutboundRuleItemChild())
-          {
-            Log.Info(this, db, "Refreshing Outbound Rule [{0}] after save event", item.Parent.Paths.FullPath);
-
-            rulesEngine.RefreshRule(item.Parent, redirectFolderItem);
           }
         }
+        catch (Exception ex)
+        {
+          Log.Error(this, ex, db, "Exception occured when saving item after save - Item ID: {0} Item Path: {1}", item.ID,
+            item.Paths.FullPath);
+        }
       }
-      catch (Exception ex)
-      {
-        Log.Error(this, ex, db, "Exception occured when saving item after save - Item ID: {0} Item Path: {1}", item.ID,
-          item.Paths.FullPath);
-      }
-
     }
 
     private static Item GetRedirectFolderItem(Item item)
@@ -221,7 +227,7 @@ namespace Hi.UrlRewrite.Processing
           else if (item.IsInboundRuleItemChild(formerParentId))
           {
             Item itemParent = item.Parent;
-            if (itemParent == null && formerParentId != (ID) null)
+            if (itemParent == null && formerParentId != (ID)null)
             {
               itemParent = item.Database.GetItem(formerParentId);
             }
