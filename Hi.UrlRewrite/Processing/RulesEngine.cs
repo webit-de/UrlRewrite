@@ -309,9 +309,14 @@ namespace Hi.UrlRewrite.Processing
 
         #region Caching
 
-        private RulesCache GetRulesCache()
+        private RulesCache GetRulesCache(Language languageToGet = null)
         {
-            return RulesCacheManager.GetCache(db, language);
+          if (languageToGet == null)
+          {
+            languageToGet = language;
+          }
+
+          return RulesCacheManager.GetCache(db, languageToGet);
         }
 
         internal List<InboundRule> GetCachedInboundRules()
@@ -497,8 +502,11 @@ namespace Hi.UrlRewrite.Processing
 		/// </summary>
 		internal void ClearInboundRuleCache()
 		{
-			var cache = GetRulesCache();
-			cache.ClearInboundRules();
+      foreach(var availableLanguage in db.Languages)
+      {
+        var cache = GetRulesCache(availableLanguage);
+			  cache.ClearInboundRules();
+      }
 		}
 
 		/// <summary>
@@ -506,8 +514,11 @@ namespace Hi.UrlRewrite.Processing
 		/// </summary>
 		internal void ClearOutboundRuleCache()
 		{
-			var cache = GetRulesCache();
-			cache.ClearOutboundRules();
+      foreach(var availableLanguage in db.Languages)
+      {
+        var cache = GetRulesCache(availableLanguage);
+			  cache.ClearOutboundRules();
+      }
 		}
 		#endregion
 
