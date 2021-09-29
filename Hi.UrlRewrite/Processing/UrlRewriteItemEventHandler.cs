@@ -1,12 +1,12 @@
-﻿using Hi.UrlRewrite.Templates.Folders;
+﻿using System;
+using System.Linq;
+using Hi.UrlRewrite.Templates.Folders;
 using Hi.UrlRewrite.Templates.Inbound;
 using Sitecore.Data;
 using Sitecore.Data.Events;
 using Sitecore.Data.Items;
 using Sitecore.Events;
 using Sitecore.SecurityModel;
-using System;
-using System.Linq;
 
 namespace Hi.UrlRewrite.Processing
 {
@@ -42,7 +42,7 @@ namespace Hi.UrlRewrite.Processing
 
       using (new SecurityDisabler())
       {
-        item = db.GetItem(itemId);
+        item = db.GetItem(itemId, itemSavedRemoteEventArg.Item.Language);
       }
 
       RunItemSaved(item, itemSavedRemoteEventArg.Changes);
@@ -105,7 +105,7 @@ namespace Hi.UrlRewrite.Processing
               Log.Info(this, db,
                 "Inbound Rule [{0}] cannot be individually refreshed after save event. Clearing inbound rule cache.",
                 item.Paths.FullPath);
-                
+
               rulesEngine.ClearInboundRuleCache();
             }
           }
@@ -204,7 +204,7 @@ namespace Hi.UrlRewrite.Processing
           else if (item.IsInboundRuleItemChild(formerParentId))
           {
             Item itemParent = item.Parent;
-            if (itemParent == null && formerParentId != (ID) null)
+            if (itemParent == null && formerParentId != (ID)null)
             {
               itemParent = item.Database.GetItem(formerParentId);
             }
