@@ -11,6 +11,10 @@ Sitecore Support: "Creation of custom segments is not supported by the Experienc
 
 Changelog
 =========
+Version 1.9.2
+* Language is considered when clearing caches
+* Inbound rules: Optimize rule matching by testing the site restriction before the rule is evaluated
+* Inbound rules: Remove language embedding after a match was found and processing of rules was not stopped
 
 Version 1.9.1
 * Added support for Sitecore 9.3
