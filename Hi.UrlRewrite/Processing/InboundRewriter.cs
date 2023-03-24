@@ -12,15 +12,16 @@ using Hi.UrlRewrite.Entities.Match;
 using Hi.UrlRewrite.Entities.Rules;
 using Hi.UrlRewrite.Processing.Results;
 using Sitecore.Data;
+using Sitecore.Globalization;
 using Sitecore.Links;
 using Sitecore.Resources.Media;
 using Sitecore.Sites;
+using Sitecore.Web;
 
 namespace Hi.UrlRewrite.Processing
 {
   public class InboundRewriter
   {
-
     public NameValueCollection RequestServerVariables { get; set; }
     public NameValueCollection RequestHeaders { get; set; }
 
@@ -43,36 +44,35 @@ namespace Hi.UrlRewrite.Processing
         throw new ArgumentNullException("inboundRules");
       }
 
-      var originalUri = requestUri;
-
-      Log.Debug(this, "Processing url: {0}", originalUri);
+      Log.Debug(this, "Processing url: {0}", requestUri);
 
       var ruleResult = new InboundRuleResult
       {
-        RewrittenUri = originalUri
+        RewrittenUri = requestUri
       };
 
+      Uri uriWithoutLanguage = null;
       var processedResults = new List<InboundRuleResult>();
-
       foreach (var inboundRule in inboundRules)
       {
-        ruleResult = ProcessInboundRule(ruleResult.RewrittenUri, inboundRule);
+        var uriToProcess = uriWithoutLanguage ?? ruleResult.RewrittenUri;
+        ruleResult = ProcessInboundRule(uriToProcess, inboundRule);
         processedResults.Add(ruleResult);
 
         if (!ruleResult.RuleMatched)
           continue;
 
-        if (ruleResult.RuleMatched && ruleResult.StopProcessing)
-        {
+
+        if (ruleResult.StopProcessing)
           break;
-        }
+
+        uriWithoutLanguage = GetWithoutEmbeddedLanguage(ruleResult.RewrittenUri);
       }
 
-      // TODO: log more information about what actually hapenned - this currently only reflects rewrites/redirects
-      Log.Debug(this, "Processed originalUrl: {0} redirectedUrl: {1}", originalUri, ruleResult.RewrittenUri);
+      // TODO: log more information about what actually happened - this currently only reflects rewrites/redirects
+      Log.Debug(this, "Processed originalUrl: {0} redirectedUrl: {1}", requestUri, ruleResult.RewrittenUri);
 
-      var finalResult = new ProcessInboundRulesResult(originalUri, processedResults);
-
+      var finalResult = new ProcessInboundRulesResult(requestUri, processedResults);
       return finalResult;
     }
 
@@ -557,7 +557,34 @@ namespace Hi.UrlRewrite.Processing
       return rewriteUrl;
     }
 
+    private Uri GetWithoutEmbeddedLanguage(Uri uri)
+    {
+      var basePath = uri.AbsolutePath;
+      try
+      {
+        // strip out first part of path
+        var language = WebUtil.ExtractLanguageName(basePath);
 
+        // check if first part can be parsed as a language
+        if (string.IsNullOrEmpty(language) || !Language.TryParse(language, out _))
+          return null;
 
+        // Remove language from path
+        var pathWithoutLanguage = basePath.Substring(language.Length + 1);
+        Log.Debug(this, $"Rewritten URL has embedded language: {basePath} - {language}. URL after removing language: {pathWithoutLanguage}");
+
+        // Create Uri with modified path
+        var uriBuilder = new UriBuilder(uri)
+        {
+          Path = pathWithoutLanguage
+        };
+        return uriBuilder.Uri;
+      }
+      catch (Exception ex)
+      {
+        Log.Error(this, $"Exception while removing language from matched URL ({uri.AbsolutePath}): {ex}");
+        return null;
+      }
+    }
   }
 }
