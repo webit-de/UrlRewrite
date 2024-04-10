@@ -11,6 +11,13 @@ Sitecore Support: "Creation of custom segments is not supported by the Experienc
 
 Changelog
 =========
+Version 1.10.0
+
+* Change .NET target framework to 4.8.1
+* Switch projects to package references
+* Upgrade to Sitecore 10.3.1
+* Move all config files to a dedicated UrlRewrite folder
+
 Version 1.9.2
 * Language is considered when clearing caches
 * Inbound rules: Optimize rule matching by testing the site restriction before the rule is evaluated

@@ -99,6 +99,15 @@
       <Version>4.2.1409.1722</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="web.Debug.config">
+      <DependentUpon>app.config</DependentUpon>
+    </None>
+    <None Include="web.Release.config">
+      <DependentUpon>app.config</DependentUpon>
+    </None>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
